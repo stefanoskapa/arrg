@@ -61,7 +61,7 @@ Usage: myapp [OPTION]...
 
 ## Installation
 
-Copy `arrg.h`, `arrg.c`, and the dependency `da.h`/`da.c` into your project.
+Copy `arrg.h` and `arrg.c` into your project. No external dependencies.
 
 ## API Reference
 
