@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include "arrg.h"
+#include "Arrg.h"
 #define VAL_MASK    0b00000000000000000000000000000110
 #define SPECIAL_V   0b11111111111111111111111111111111
 #define SPECIAL_H   0b11111111111111111111111111111110
