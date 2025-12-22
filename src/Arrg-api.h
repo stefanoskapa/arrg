@@ -1,8 +1,6 @@
 #ifndef ARRG_H
 #define ARRG_H
 #include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdbool.h>
 
 /**
@@ -129,39 +127,4 @@ char **ar_get_values(int opt_idx);
  * @param opt_idx Option index in cfgv
  */
 int ar_get_val_len(int opt_idx);
-
-typedef struct Array {
-    char** items;
-    size_t capacity;
-    size_t size;
-} Array;
-
-typedef struct Values {
-    Array *items;
-    bool supplied;
-} Values;
-
-static int find_max_lform_size(int cfgc, Ar_conf cfgv[]);
-static void show_help(int cfgc, Ar_conf cfgv[]);
-static void print_wrapped(char *text, int offset, int);
-static bool lform_equals(char *arg, char *lform); 
-static void parse_values(int argc, char *argv[], int cfgc, Ar_conf cfgv[]);
-static bool is_lform(char *arg);
-static bool is_sform(char *arg);
-static int get_lform_index(int cfgc, Ar_conf  cfgv[], char *arg);
-static void check_ptr(void *ptr);
-static void fail(char *reason);
-static int get_sform_index(int cfgc, Ar_conf  cfgv[], char arg);
-static void init(int cfgc, Ar_conf cfgv[]);
-static void add_value(int index, Ar_conf *cfgv, char *value);
-static void add_positional(Ar_conf *cfgv,char *arg);
-static bool handle_special(int cfgc, Ar_conf *cfgv, char *arg);
-static bool handle_sform(int cfgc, Ar_conf *cfgv,int argc, char *argv[], char *arg, int arg_len, int i);
-static bool handle_lform(int cfgc, Ar_conf *cfgv,int argc, char *argv[], char *arg, int arg_len, int i);
-static bool is_positional(Ar_conf);
-//dynamic array
-static Array *da_init();
-static void da_print(Array array);
-static void da_add(Array *array, char *str);
-static void da_free(Array *array);
 #endif

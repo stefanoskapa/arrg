@@ -9,42 +9,6 @@
 #define SPECIAL_H   0b11111111111111111111111111111110
 #define INITIAL_CAPACITY 20
 
-typedef struct Array {
-    char** items;
-    size_t capacity;
-    size_t size;
-} Array;
-
-
-typedef struct Values {
-    Array *items;
-    bool supplied;
-} Values;
-
-static int find_max_lform_size(int cfgc, Ar_conf cfgv[]);
-static void show_help(int cfgc, Ar_conf cfgv[]);
-static void print_wrapped(char *text, int offset, int);
-static bool lform_equals(char *arg, char *lform); 
-static void parse_values(int argc, char *argv[], int cfgc, Ar_conf cfgv[]);
-static bool is_lform(char *arg);
-static bool is_sform(char *arg);
-static int get_lform_index(int cfgc, Ar_conf  cfgv[], char *arg);
-static void check_ptr(void *ptr);
-static void fail(char *reason);
-static int get_sform_index(int cfgc, Ar_conf  cfgv[], char arg);
-static void init(int cfgc, Ar_conf cfgv[]);
-static void add_value(int index, Ar_conf *cfgv, char *value);
-static void add_positional(Ar_conf *cfgv,char *arg);
-static bool handle_special(int cfgc, Ar_conf *cfgv, char *arg);
-static bool handle_sform(int cfgc, Ar_conf *cfgv,int argc, char *argv[], char *arg, int arg_len, int i);
-static bool handle_lform(int cfgc, Ar_conf *cfgv,int argc, char *argv[], char *arg, int arg_len, int i);
-static bool is_positional(Ar_conf);
-//dynamic array
-static Array *da_init();
-static void da_print(Array array);
-static void da_add(Array *array, char *str);
-static void da_free(Array *array);
-
 const Ar_conf ARRG_HELP = {'\0', "help", "display this help and exit", SPECIAL_H};
 const Ar_conf ARRG_VERSION = {'\0', "version", "display version and exit", SPECIAL_V};
 
@@ -390,7 +354,7 @@ static void show_help(int cfgc, Ar_conf cfgv[]) {
 }
 
 static int find_max_lform_size(int cfgc, Ar_conf cfgv[]) {
-    int size = -1;
+    int size = 0;
     for (int i = 0; i < cfgc; i++) {
         char *l = cfgv[i].lform; 
         int len = l == NULL ? 0 : strlen(l);
