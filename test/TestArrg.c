@@ -38,7 +38,35 @@ void test_find_max_lform_size_returns_zero_3(void) {
     TEST_ASSERT_EQUAL_INT(0, a);
 }
 
-//static bool lform_equals(char *arg, char *lform) {
+void test_lform_equals_returns_true(void) {
+    bool a = lform_equals("--list", "list"); 
+    TEST_ASSERT_TRUE(a);
+}
+
+void test_lform_equals_returns_false_1(void) {
+    bool a = lform_equals(NULL, "list"); 
+    TEST_ASSERT_FALSE(a);
+}
+
+void test_lform_equals_returns_false_2(void) {
+    bool a = lform_equals("list", NULL); 
+    TEST_ASSERT_FALSE(a);
+}
+
+void test_lform_equals_returns_false_3(void) {
+    bool a = lform_equals(NULL, NULL); 
+    TEST_ASSERT_FALSE(a);
+}
+
+void test_lform_equals_returns_false_4(void) {
+    bool a = lform_equals("--l", "list"); 
+    TEST_ASSERT_FALSE(a);
+}
+
+void test_lform_equals_returns_false_5(void) {
+    bool a = lform_equals("--list", "li"); 
+    TEST_ASSERT_FALSE(a);
+}
 
 void setUp(void) {
     // Runs before each test
@@ -54,5 +82,11 @@ int main(void) {
     RUN_TEST(test_find_max_lform_size_returns_zero_1);
     RUN_TEST(test_find_max_lform_size_returns_zero_2);
     RUN_TEST(test_find_max_lform_size_returns_zero_3);
+    RUN_TEST(test_lform_equals_returns_true);
+    RUN_TEST(test_lform_equals_returns_false_1);
+    RUN_TEST(test_lform_equals_returns_false_2);
+    RUN_TEST(test_lform_equals_returns_false_3);
+    RUN_TEST(test_lform_equals_returns_false_4);
+    RUN_TEST(test_lform_equals_returns_false_5);
     return UNITY_END();
 }
