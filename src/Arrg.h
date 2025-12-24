@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+typedef struct ar_parser ar_parser;
 /**
  * NO_VAL:     used to indicate an option without value (flag)
  * ONE_VAL:    used to indicate an option that accepts one value
@@ -66,6 +67,8 @@ extern const Ar_conf ARRG_HELP;
  */
 extern const Ar_conf ARRG_VERSION;
 
+
+ar_parser *ar_init(int argc, char **argv, int cfgc, Ar_conf *cfgv);
 /**
  * Processes CLI argumets and cfgv configuration
  * Needs to be called before 
@@ -75,60 +78,67 @@ extern const Ar_conf ARRG_VERSION;
  * @param cfgc item count in config array
  * @param cfgv config array
  */
-int ar_handle(int argc, char *argv[], int cfgc, Ar_conf cfgv[]);
-
+void ar_parse(ar_parser *parser);
 void show_supplied(int cfgc, Ar_conf cfgv[]);
 
 /**
  * Free's up allocated memory. Should be called
  * when done using arrg.
  */
-void ar_close(int cfgc);
+void ar_close(ar_parser *parser);
 
 /**
  * Set the version number for --version
  * (optional)
+ * @param parser pointer to ar_parser object returned from ar_init
  * @param ver Version string
  */
-void ar_program_version(char *ver);
+void ar_program_version(ar_parser *parser, char *ver);
 
 /**
  * Provide the program name to 
  * show USAGE within --help
  * (optional)
+ * @param parser pointer to ar_parser object returned from ar_init
+ * @param name Name of the consuming program
  */
-void ar_program_name(char *name);
+void ar_program_name(ar_parser *parser, char *name);
 
 /**
  * Provide a program description
  * to appear on --help screen.
  * (optional)
+ * @param parser pointer to ar_parser object returned from ar_init
+ * @param desc A description of the consuming program
  */
-void ar_program_description(char *desc);
+void ar_program_description(ar_parser *parser, char *desc);
 
 /**
  * Returns whether the specific option
  * was provided by the user.
  *
+ * @param parser pointer to ar_parser object returned from ar_init
  * @param opt_idx Option index in cfgv
  */
-bool ar_is_provided(int idx);
+bool ar_is_provided(ar_parser *parser, int idx);
 
 /**
  * Returns the provided values for the
  * option as a list of strings.
  *
+ * @param parser pointer to ar_parser object returned from ar_init
  * @param opt_idx Option index in cfgv
  */
-char **ar_get_values(int opt_idx);
+char **ar_get_values(ar_parser *parser, int opt_idx);
 
 /**
  * Returns how many values the user
  * provided for the specific option.
  *
+ * @param parser pointer to ar_parser object returned from ar_init
  * @param opt_idx Option index in cfgv
  */
-int ar_get_val_len(int opt_idx);
+int ar_get_val_len(ar_parser *parser, int opt_idx);
 
 typedef struct Array {
     char** items;
@@ -141,23 +151,21 @@ typedef struct Values {
     bool supplied;
 } Values;
 
-static int find_max_lform_size(int cfgc, Ar_conf cfgv[]);
-static void show_help(int cfgc, Ar_conf cfgv[]);
+static int find_max_lform_size(ar_parser *parser);
+static void show_help(ar_parser *parser);
 static void print_wrapped(char *text, int offset, int);
 static bool lform_equals(char *arg, char *lform); 
-static void parse_values(int argc, char *argv[], int cfgc, Ar_conf cfgv[]);
 static bool is_lform(char *arg);
 static bool is_sform(char *arg);
-static int get_lform_index(int cfgc, Ar_conf  cfgv[], char *arg);
+static int get_sform_index(ar_parser *parser, char arg);
+static int get_lform_index(ar_parser *parser, char *arg);
 static void check_ptr(void *ptr);
 static void fail(char *reason);
-static int get_sform_index(int cfgc, Ar_conf  cfgv[], char arg);
-static void init(int cfgc, Ar_conf cfgv[]);
-static void add_value(int index, Ar_conf *cfgv, char *value);
-static void add_positional(Ar_conf *cfgv,char *arg);
-static bool handle_special(int cfgc, Ar_conf *cfgv, char *arg);
-static bool handle_sform(int cfgc, Ar_conf *cfgv,int argc, char *argv[], char *arg, int arg_len, int i);
-static bool handle_lform(int cfgc, Ar_conf *cfgv,int argc, char *argv[], char *arg, int arg_len, int i);
+static void add_value(ar_parser *parser, int index, char *value);
+static void add_positional(ar_parser *parser,char *arg);
+static bool handle_special(ar_parser *parser, char *arg);
+static bool handle_sform(ar_parser *parser, char *arg, int arg_len, int i);
+static bool handle_lform(ar_parser *parser, char *arg, int arg_len, int i);
 static bool is_positional(Ar_conf);
 //dynamic array
 static Array *da_init();

@@ -12,69 +12,117 @@
 const Ar_conf ARRG_HELP = {'\0', "help", "display this help and exit", SPECIAL_H};
 const Ar_conf ARRG_VERSION = {'\0', "version", "display version and exit", SPECIAL_V};
 
-static int positional_idx = -1;
-static bool default_help = false;
-static bool default_version = false;
-static bool has_options = false;
-static Values *values;
-static char *util_name = NULL;
-static char *util_version = NULL;
-static char *util_description = NULL;
-static bool end_of_options = false;
-static int values_len = 0;
+typedef struct ar_parser {
+    int argc;
+    char **argv;
+    int cfgc;
+    Ar_conf *cfgv;
+    int positional_idx;
+    bool default_help;
+    bool default_version;
+    bool has_options;
+    Values *values;
+    char *util_name;
+    char *util_version;
+    char *util_description;
+    bool end_of_options;
+    int values_len;
+} ar_parser;
 
-bool ar_is_provided(int idx) {
-    if (idx >= values_len)
-        return false;
-    return values[idx].supplied;
+ar_parser *ar_init(int argc, char **argv, int cfgc, Ar_conf *cfgv) {
+   ar_parser *parser = malloc(sizeof(ar_parser)); 
+   parser->argc = argc;
+   parser->argv = argv;
+   parser->cfgc = cfgc;
+   parser->cfgv = cfgv;
+   parser->positional_idx = -1;
+   parser->default_help = false;
+   parser->has_options = false;
+   parser->values = NULL;
+   parser->util_name = NULL;
+   parser->util_version = NULL;
+   parser->util_description = NULL;
+   parser->end_of_options = false;
+   parser->values_len = 0;
+    parser->values = malloc(cfgc * sizeof(Values));
+    check_ptr(parser->values);
+    for (int i = 0; i < cfgc; i++) { // initialize empty arrays
+        if (cfgv[i].sform != '\0' || cfgv[i].lform != NULL) {
+            parser->has_options = true;
+        }
+        parser->values[i].items = (parser->cfgv[i].flags & VAL_MASK) != AR_NO_VAL ? da_init() : NULL; 
+        parser->values[i].supplied = false;
+        if (parser->cfgv[i].sform == '\0' && parser->cfgv[i].lform == NULL) {
+            parser->positional_idx = i;
+        }
+        if (parser->cfgv[i].flags == SPECIAL_H) {
+            parser->default_help = true;
+        }
+        if (parser->cfgv[i].flags == SPECIAL_V) {
+            parser->default_version = true;
+        }
+    }
+   return parser;
 }
 
-char **ar_get_values(int opt_idx) {
-    if (opt_idx >= values_len) {
+void ar_program_version(ar_parser *parser, char *ver) {
+    parser->util_version = ver;
+}
+
+void ar_program_name(ar_parser *parser, char *name) {
+    parser->util_name = name;
+}
+
+void ar_program_description(ar_parser *parser, char *desc) {
+    parser->util_description = desc;
+}
+
+bool ar_is_provided(ar_parser *parser, int idx) {
+    if (idx >= parser->values_len)
+        return false;
+    return parser->values[idx].supplied;
+}
+
+char **ar_get_values(ar_parser *parser, int opt_idx) {
+    if (opt_idx >= parser->values_len) {
         return NULL;
     }
-    return values[opt_idx].items->items;
+    return parser->values[opt_idx].items->items;
 }
 
-int ar_get_val_len(int opt_idx) {
-    if (opt_idx >= values_len) {
+int ar_get_val_len(ar_parser *parser, int opt_idx) {
+    if (opt_idx >= parser->values_len) {
         return 0;
     }
-    return values[opt_idx].items->size;
+    return parser->values[opt_idx].items->size;
 }
 
-int ar_handle(int argc, char *argv[], int cfgc, Ar_conf cfgv[]) {
-    init(cfgc, cfgv);
-    parse_values(argc, argv, cfgc, cfgv);
-    return 0;
-}
-
-static void parse_values(int argc, char *argv[], int cfgc, Ar_conf cfgv[]) {
-    for (int i = 1; i < argc; i++) {
-        char *arg = argv[i]; 
+void ar_parse(ar_parser *parser) {
+    for (int i = 1; i < parser->argc; i++) {
+        char *arg = parser->argv[i]; 
         int arg_len = strlen(arg);
-        bool result = handle_special(cfgc,cfgv,arg);
+        bool result = handle_special(parser, arg);
         if (result) continue;
 
         if (is_lform(arg) ) {       
-            result = handle_lform(cfgc,cfgv,argc,argv,arg, arg_len,i);
+            result = handle_lform(parser, arg, arg_len, i);
             if (result) i++;
         } else if (is_sform(arg)) {            
-            result = handle_sform(cfgc, cfgv, argc, argv, arg, arg_len, i);
+            result = handle_sform(parser, arg, arg_len, i);
             if (result) i++;
         } else { 
-            add_positional(cfgv, arg);
+            add_positional(parser, arg);
         }
     }
-    for (int i = 0; i < cfgc; i++) {
-        if ((cfgv[i].flags & AR_MANDATORY) != 0 && values[i].supplied == false) {
-            if (is_positional(cfgv[i])) {
-                fprintf(stderr, "You need to provide at least one %s\n", cfgv[i].description);
+    for (int i = 0; i < parser->cfgc; i++) {
+        if ((parser->cfgv[i].flags & AR_MANDATORY) != 0 && parser-> values[i].supplied == false) {
+            if (is_positional(parser->cfgv[i])) {
+                fprintf(stderr, "You need to provide at least one %s\n", parser->cfgv[i].description);
             } else {
-                if (cfgv[i].lform == NULL) {
-                    fprintf(stderr, "You have to supply at least one value for -%c\n", cfgv[i].sform);
+                if (parser->cfgv[i].lform == NULL) {
+                    fprintf(stderr, "You have to supply at least one value for -%c\n", parser->cfgv[i].sform);
                 } else {
-                    fprintf(stderr, "You have to supply at least one value for --%s\n", cfgv[i].lform);
+                    fprintf(stderr, "You have to supply at least one value for --%s\n", parser->cfgv[i].lform);
                 }
             }
             exit(1);
@@ -85,64 +133,16 @@ static void parse_values(int argc, char *argv[], int cfgc, Ar_conf cfgv[]) {
 static bool is_positional(Ar_conf opt) {
     return (opt.sform == '\0' && opt.lform == NULL);
 }
-void ar_program_version(char *ver) {
-    util_version = ver;
-}
 
-void ar_program_name(char *name) {
-    util_name = name;
-}
-
-void ar_program_description(char *desc) {
-    util_description = desc;
-}
-
-static void init(int cfgc, Ar_conf cfgv[]) {
-    values_len = cfgc;
-    values = malloc(cfgc * sizeof(Values));
-    check_ptr(values);
-
-    for (int i = 0; i < cfgc; i++) { // initialize empty arrays
-        if (cfgv[i].sform != '\0' || cfgv[i].lform != NULL) {
-            has_options = true;
-        }
-        values[i].items = (cfgv[i].flags & VAL_MASK) != AR_NO_VAL ? da_init() : NULL; 
-        values[i].supplied = false;
-        if (cfgv[i].sform == '\0' && cfgv[i].lform == NULL) {
-            positional_idx = i;
-        }
-        if (cfgv[i].flags == SPECIAL_H) {
-            default_help = true;
-        }
-        if (cfgv[i].flags == SPECIAL_V) {
-            default_version = true;
+void ar_close(ar_parser *parser) {
+    for (int i = 0; i < parser->cfgc; i++) {
+        if (parser->values[i].items != NULL) {
+            da_free(parser->values[i].items);
         }
     }
+    free(parser->values);
 }
 
-void ar_close(int cfgc) {
-    for (int i = 0; i < cfgc; i++) {
-        if (values[i].items != NULL) {
-            da_free(values[i].items);
-        }
-    }
-    free(values);
-}
-
-void show_supplied(int cfgc, Ar_conf cfgv[]) {
-    for (int i = 0; i < cfgc; i++) {
-        if (values[i].supplied) {
-            if (cfgv[i].lform == NULL && cfgv[i].sform == '\0') {
-                printf("Positional arguments:\n");
-            } else {
-                printf("--%s\n", cfgv[i].lform);
-            }
-            if ((cfgv[i].flags & VAL_MASK) != AR_NO_VAL) {
-                da_print(*values[i].items);
-            }
-        }
-    }
-}
 
 static void check_ptr(void *ptr) {
     if (ptr == NULL) {
@@ -155,40 +155,40 @@ static void fail(char *reason) {
     exit(1);
 }
 
-static bool handle_special(int cfgc, Ar_conf *cfgv, char *arg) {
-    if (end_of_options == true) {
-        add_positional(cfgv,arg);
+static bool handle_special(ar_parser *parser, char *arg) {
+    if (parser->end_of_options == true) {
+        add_positional(parser, arg);
         return true;
     } else if (strcmp(arg, "--") == 0) {
-        end_of_options = true;
+        parser->end_of_options = true;
         return true;
-    } else if (strcmp(arg, "--help") == 0 && default_help == true) {
-        show_help(cfgc, cfgv);
+    } else if (strcmp(arg, "--help") == 0 && parser->default_help == true) {
+        show_help(parser);
         exit(0);
-    } else if (strcmp(arg, "--version") == 0 && default_version == true) {
-        printf("%s v%s\n", util_name, util_version);
+    } else if (strcmp(arg, "--version") == 0 && parser->default_version == true) {
+        printf("%s v%s\n", parser->util_name, parser->util_version);
         exit(0);
     }
     return false;
 }
 
 // true means increment i
-static bool handle_lform(int cfgc, Ar_conf *cfgv,int argc, char *argv[], char *arg, int arg_len, int i) {
-    int index = get_lform_index(cfgc, cfgv, arg);
+static bool handle_lform(ar_parser *parser, char *arg, int arg_len, int i) {
+    int index = get_lform_index(parser, arg);
     if (index == -1) {
         fprintf(stderr, "%s is not a valid option\n", arg);
         exit(1);
     }
-    if ((cfgv[index].flags & VAL_MASK) != AR_NO_VAL) { // option needs at least one value
-        int eq_idx = strlen(cfgv[index].lform) + 2; //length of arg spec+2 and index of = (if exists)
+    if ((parser->cfgv[index].flags & VAL_MASK) != AR_NO_VAL) { // option needs at least one value
+        int eq_idx = strlen(parser->cfgv[index].lform) + 2; //length of arg spec+2 and index of = (if exists)
         if (arg[eq_idx] == '=' && arg_len > eq_idx + 1) { // = found followed by more chars 
             int new_val_len = arg_len - eq_idx; // new val len including \0
             char *new_val = malloc(new_val_len); // total arg length - lform+2 = len of value + 1
             check_ptr(new_val);
             memcpy(new_val, arg + eq_idx + 1, new_val_len); 
-            add_value(index,cfgv, new_val);
-        } else if (i + 1 < argc) { // value is the next argument
-            add_value(index, cfgv, argv[i + 1]);
+            add_value(parser, index, new_val);
+        } else if (i + 1 < parser->argc) { // value is the next argument
+            add_value(parser, index, parser->argv[i + 1]);
             return true; 
         } else {
             fprintf(stderr, "Option %s was not supplied a value\n", arg);
@@ -196,84 +196,84 @@ static bool handle_lform(int cfgc, Ar_conf *cfgv,int argc, char *argv[], char *a
         }
     } else { //option doesn't accept values
         int argsize = strlen(arg); //size of user supplied argument
-        if (argsize > strlen(cfgv[index].lform) + 2) {
+        if (argsize > strlen(parser->cfgv[index].lform) + 2) {
             fprintf(stderr, "invalid option %s\n", arg);
             exit(1);
         }
-        values[index].supplied = true;
+        parser->values[index].supplied = true;
     }
     return false;
 }
 
-static bool handle_sform(int cfgc, Ar_conf *cfgv,int argc, char *argv[], char *arg, int arg_len, int i) {
+static bool handle_sform(ar_parser *parser, char *arg, int arg_len, int i) {
     for (int j = 1; j < arg_len; j++) { // iterate over all characters 
-        int index = get_sform_index(cfgc, cfgv, arg[j]);
+        int index = get_sform_index(parser, arg[j]);
         if (index == -1) {
             fprintf(stderr, "-%c is not a valid option\n", arg[j]);
             exit(1);
         }
-        if ((cfgv[index].flags & VAL_MASK) != AR_NO_VAL) { //needs at least one value. The value will either be
+        if ((parser->cfgv[index].flags & VAL_MASK) != AR_NO_VAL) { //needs at least one value. The value will either be
 
             if (j == arg_len - 1) {  // value MUST be the next argument
-                if (i == argc - 1) { // no val supplied
+                if (i == parser->argc - 1) { // no val supplied
                     fprintf(stderr, "Option %s was not supplied a value\n", arg);
                     exit(1);
                 } else { //value is next arg
-                    add_value(index, cfgv, argv[i + 1]);
+                    add_value(parser, index, parser->argv[i + 1]);
                     return true; 
                 }
             } else { //value is supplied in-place
                 char *new_val=malloc(arg_len - j);
                 check_ptr(new_val);
                 memcpy(new_val, arg + j + 1, arg_len - j);
-                add_value(index, cfgv, new_val);
+                add_value(parser, index, new_val);
                 break;
             }
         } else { //doesn't accept values
-            values[index].supplied = true;
+            parser->values[index].supplied = true;
         }
     }
     return false;
 }
 
-static void add_positional(Ar_conf *cfgv,char *arg) {
-    if (positional_idx == -1) {
+static void add_positional(ar_parser *parser, char *arg) {
+    if (parser->positional_idx == -1) {
         fail("Positional arguments are not supported");
     }
-    add_value(positional_idx, cfgv, arg);
+    add_value(parser, parser->positional_idx, arg);
 }
 
-static void add_value(int index, Ar_conf *cfgv, char *value) {
-    if ((cfgv[index].flags & VAL_MASK) == AR_ONE_VAL) {
-        if (values[index].items->size > 0) {
-            if( index == positional_idx) {
-                fprintf(stderr, "Supplying more than one %s is not allowed\n", cfgv[positional_idx].description);
+static void add_value(ar_parser *parser, int index, char *value) {
+    if ((parser->cfgv[index].flags & VAL_MASK) == AR_ONE_VAL) {
+        if (parser->values[index].items->size > 0) {
+            if( index == parser->positional_idx) {
+                fprintf(stderr, "Supplying more than one %s is not allowed\n", parser->cfgv[parser->positional_idx].description);
             } else {
-                fprintf(stderr, "Option %s doesn't accept multiple values\n", cfgv[index].lform);
+                fprintf(stderr, "Option %s doesn't accept multiple values\n", parser->cfgv[index].lform);
             }
             exit(1);
         }
     }
-    da_add(values[index].items, value); 
-    values[index].supplied = true;
+    da_add(parser->values[index].items, value); 
+    parser->values[index].supplied = true;
 }
 /*
    Accepts a user-supplied lform (e.g. --include) and
    return the index in the spec or -1 if it is
    not found.
 */
-static int get_lform_index(int cfgc, Ar_conf  cfgv[], char *arg) {
-    for (int i = 0; i < cfgc; i++) {
-        if (lform_equals(arg, cfgv[i].lform)) {
+static int get_lform_index(ar_parser *parser, char *arg) {
+    for (int i = 0; i < parser->cfgc; i++) {
+        if (lform_equals(arg, parser->cfgv[i].lform)) {
             return i;
         }
     }
     return -1;
 }
 
-static int get_sform_index(int cfgc, Ar_conf  cfgv[], char arg) {
-    for (int i = 0; i < cfgc; i++) {
-        if (cfgv[i].sform == arg) {
+static int get_sform_index(ar_parser *parser, char arg) {
+    for (int i = 0; i < parser->cfgc; i++) {
+        if (parser->cfgv[i].sform == arg) {
             return i;
         }
     }
@@ -319,29 +319,29 @@ static bool lform_equals(char *arg, char *lform) {
     }
 }
 
-static void show_help(int cfgc, Ar_conf cfgv[]) {
-    int max = find_max_lform_size(cfgc, cfgv);
-    if (util_name != NULL) {
-        printf("Usage: %s ", util_name);
-        if (has_options == true) {
+static void show_help(ar_parser *parser) {
+    int max = find_max_lform_size(parser);
+    if (parser->util_name != NULL) {
+        printf("Usage: %s ", parser->util_name);
+        if (parser->has_options == true) {
             fputs("[OPTION]... ", stdout);
         }
-        if (positional_idx != -1) {
-            printf("[%s]", cfgv[positional_idx].description);
-            if ((cfgv[positional_idx].flags & VAL_MASK) != AR_ONE_VAL) {
+        if (parser->positional_idx != -1) {
+            printf("[%s]",parser->cfgv[parser->positional_idx].description);
+            if ((parser->cfgv[parser->positional_idx].flags & VAL_MASK) != AR_ONE_VAL) {
                 fputs("...", stdout);
             }
         }
         putchar('\n');        
     }
-    if (util_description != NULL) {
-        print_wrapped(util_description, 0, 0);
+    if (parser->util_description != NULL) {
+        print_wrapped(parser->util_description, 0, 0);
         putchar('\n');
     }
 
-    for (int i = 0; i < cfgc; i++) {
-        char sform = cfgv[i].sform;
-        char *lform = cfgv[i].lform;
+    for (int i = 0; i < parser->cfgc; i++) {
+        char sform = parser->cfgv[i].sform;
+        char *lform = parser->cfgv[i].lform;
         if (sform == '\0' && lform == NULL) {
             continue; //positional arguments
         } else if (sform == '\0') {
@@ -351,14 +351,14 @@ static void show_help(int cfgc, Ar_conf cfgv[]) {
         }
         int len = lform == NULL ? 0 : strlen(lform);
         int offset = max - len + 4; // add 4 spaces
-        print_wrapped(cfgv[i].description, max + 8 + 4, offset);
+        print_wrapped(parser->cfgv[i].description, max + 8 + 4, offset);
     }
 }
 
-static int find_max_lform_size(int cfgc, Ar_conf cfgv[]) {
+static int find_max_lform_size(ar_parser *parser) {
     int size = 0;
-    for (int i = 0; i < cfgc; i++) {
-        char *l = cfgv[i].lform; 
+    for (int i = 0; i < parser->cfgc; i++) {
+        char *l = parser->cfgv[i].lform; 
         int len = l == NULL ? 0 : strlen(l);
         if (len > size) {
             size = len;
