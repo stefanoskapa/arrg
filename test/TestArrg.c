@@ -68,6 +68,77 @@ void test_lform_equals_returns_false_5(void) {
     TEST_ASSERT_FALSE(a);
 }
 
+void test_is_sform_returns_false_1(void) {
+    bool a = is_sform("--s");
+    TEST_ASSERT_FALSE(a);
+}
+
+void test_is_sform_returns_false_2(void) {
+    bool a = is_sform(NULL);
+    TEST_ASSERT_FALSE(a);
+}
+
+
+void test_is_sform_returns_false_3(void) {
+    bool a = is_sform("-");
+    TEST_ASSERT_FALSE(a);
+}
+
+void test_is_sform_returns_false_4(void) {
+    bool a = is_sform("--");
+    TEST_ASSERT_FALSE(a);
+}
+
+void test_is_sform_returns_true_1(void) {
+    bool a = is_sform("-a");
+    TEST_ASSERT_TRUE(a);
+}
+
+void test_is_sform_returns_true_2(void) {
+    bool a = is_sform("-abc");
+    TEST_ASSERT_TRUE(a);
+}
+
+void test_is_lform_returns_false_1(void) {
+    bool a = is_lform("--");
+    TEST_ASSERT_FALSE(a);
+}
+
+void test_is_lform_returns_false_2(void) {
+    bool a = is_lform("-asdf");
+    TEST_ASSERT_FALSE(a);
+}
+
+void test_is_lform_returns_false_3(void) {
+    bool a = is_lform(NULL);
+    TEST_ASSERT_FALSE(a);
+}
+
+void test_is_lform_returns_false_4(void) {
+    bool a = is_lform("");
+    TEST_ASSERT_FALSE(a);
+}
+
+void test_is_lform_returns_false_5(void) {
+    bool a = is_lform("-f");
+    TEST_ASSERT_FALSE(a);
+}
+
+void test_is_lform_returns_true_1(void) {
+    bool a = is_lform("--f");
+    TEST_ASSERT_TRUE(a);
+}
+
+void test_is_lform_returns_true_2(void) {
+    bool a = is_lform("--include");
+    TEST_ASSERT_TRUE(a);
+}
+
+void test_is_lform_returns_true_3(void) {
+    bool a = is_lform("--dry-run");
+    TEST_ASSERT_TRUE(a);
+}
+
 void setUp(void) {
     // Runs before each test
 }
@@ -88,5 +159,19 @@ int main(void) {
     RUN_TEST(test_lform_equals_returns_false_3);
     RUN_TEST(test_lform_equals_returns_false_4);
     RUN_TEST(test_lform_equals_returns_false_5);
+    RUN_TEST(test_is_sform_returns_false_1);
+    RUN_TEST(test_is_sform_returns_false_2);
+    RUN_TEST(test_is_sform_returns_false_3);
+    RUN_TEST(test_is_sform_returns_false_4);
+    RUN_TEST(test_is_sform_returns_true_1);
+    RUN_TEST(test_is_sform_returns_true_2);
+    RUN_TEST(test_is_lform_returns_false_1);
+    RUN_TEST(test_is_lform_returns_false_2);
+    RUN_TEST(test_is_lform_returns_false_3);
+    RUN_TEST(test_is_lform_returns_false_4);
+    RUN_TEST(test_is_lform_returns_false_5);
+    RUN_TEST(test_is_lform_returns_true_1);
+    RUN_TEST(test_is_lform_returns_true_2);
+    RUN_TEST(test_is_lform_returns_true_3);
     return UNITY_END();
 }

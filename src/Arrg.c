@@ -282,11 +282,13 @@ static int get_sform_index(int cfgc, Ar_conf  cfgv[], char arg) {
 
 //returns whether the arg is an lform option
 static bool is_lform(char *arg) {
+    if (arg == NULL) return false;
     return strlen(arg) > 2 && 
         strncmp(arg, "--", 2) == 0;
 }
 
 static bool is_sform(char *arg) {
+    if (arg == NULL) return false;
     return strlen(arg) > 1 && 
         strncmp(arg, "-", 1) == 0 &&
         strncmp(arg, "--", 2) != 0;
