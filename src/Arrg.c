@@ -9,8 +9,8 @@
 #define SPECIAL_H   0b11111111111111111111111111111110
 #define INITIAL_CAPACITY 20
 
-const Ar_conf ARRG_HELP = {'\0', "help", "display this help and exit", SPECIAL_H};
-const Ar_conf ARRG_VERSION = {'\0', "version", "display version and exit", SPECIAL_V};
+const ar_conf ARRG_HELP = {'\0', "help", "display this help and exit", SPECIAL_H};
+const ar_conf ARRG_VERSION = {'\0', "version", "display version and exit", SPECIAL_V};
 
 typedef enum ret_code {
     SUCCESS,
@@ -18,11 +18,22 @@ typedef enum ret_code {
     TM_ARGS
 } ret_code;
 
+typedef struct Array {
+    char** items;
+    size_t capacity;
+    size_t size;
+} Array;
+
+typedef struct Values {
+    Array *items;
+    bool supplied;
+} Values;
+
 typedef struct ar_parser {
     int argc;
     char **argv;
     int cfgc;
-    Ar_conf *cfgv;
+    ar_conf *cfgv;
     int positional_idx;
     bool default_help;
     bool default_version;
@@ -37,7 +48,30 @@ typedef struct ar_parser {
     ret_code code;
 } ar_parser;
 
-ar_parser *ar_init(int argc, char **argv, int cfgc, Ar_conf *cfgv) {
+static int find_max_lform_size(ar_parser *parser);
+static void show_help(ar_parser *parser);
+static void print_wrapped(char *text, int offset, int);
+static bool lform_equals(char *arg, char *lform); 
+static bool is_lform(char *arg);
+static bool is_sform(char *arg);
+static int get_sform_index(ar_parser *parser, char arg);
+static int get_lform_index(ar_parser *parser, char *arg);
+static void check_ptr(void *ptr);
+static void fail(char *reason);
+static int add_value(ar_parser *parser, int index, char *value);
+static void add_positional(ar_parser *parser,char *arg);
+static bool handle_special(ar_parser *parser, char *arg);
+static bool handle_sform(ar_parser *parser, char *arg, int arg_len, int i);
+static bool handle_lform(ar_parser *parser, char *arg, int arg_len, int i);
+static bool is_positional(ar_conf);
+static Array *da_init();
+static void da_print(Array array);
+static void da_add(Array *array, char *str);
+static void da_free(Array *array);
+
+
+
+ar_parser *ar_init(int argc, char **argv, int cfgc, ar_conf *cfgv) {
     ar_parser *parser = malloc(sizeof(ar_parser)); 
     parser->argc = argc;
     parser->argv = argv;
@@ -145,7 +179,7 @@ void ar_parse(ar_parser *parser) {
     }
 }
 
-static bool is_positional(Ar_conf opt) {
+static bool is_positional(ar_conf opt) {
     return (opt.sform == '\0' && opt.lform == NULL);
 }
 

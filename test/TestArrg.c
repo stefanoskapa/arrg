@@ -3,12 +3,12 @@
 
 
 void test_find_max_lform_size_returns_longest_lform_length(void) {
-    Ar_conf cfgv[] = {
+    ar_conf cfgv[] = {
         {'a', "dry-run", "description here", 0},
         {'b', "include-lib", "description here", 0},
         {'c', NULL, "description", 0}
     };
-    int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv); 
     int a = find_max_lform_size(parser);
     ar_close(parser);
@@ -16,11 +16,11 @@ void test_find_max_lform_size_returns_longest_lform_length(void) {
 }
 
 void test_find_max_lform_size_returns_zero_1(void) {
-    Ar_conf cfgv[] = {
+    ar_conf cfgv[] = {
         {'b', "", "description here", 0},
         {'c', NULL, "description", 0}
     };
-    int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv); 
     int a = find_max_lform_size(parser);
     ar_close(parser);
@@ -28,11 +28,11 @@ void test_find_max_lform_size_returns_zero_1(void) {
 }
 
 void test_find_max_lform_size_returns_zero_2(void) {
-    Ar_conf cfgv[] = {
+    ar_conf cfgv[] = {
         {'b', NULL, "description here", 0},
         {'c', NULL, "description", 0}
     };
-    int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv); 
     int a = find_max_lform_size(parser);
     ar_close(parser);
@@ -148,10 +148,10 @@ void test_is_lform_returns_true_3(void) {
 }
 
 void test_get_sform_index_returns_index_1(void) {
-    Ar_conf cfgv[] = { 
+    ar_conf cfgv[] = { 
         {'b', "blank", "show whitespace", 0}
     };
-    int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     int a = get_sform_index(parser, 'b');
     ar_close(parser);
@@ -159,11 +159,11 @@ void test_get_sform_index_returns_index_1(void) {
 }
 
 void test_get_sform_index_returns_index_2(void) {
-    Ar_conf cfgv[] = { 
+    ar_conf cfgv[] = { 
         {'\0', NULL, "FILE", 0},
         {'b', "blank", "show whitespace", 0} 
     };
-    int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     int a = get_sform_index(parser, 'b');
     ar_close(parser);
@@ -171,12 +171,12 @@ void test_get_sform_index_returns_index_2(void) {
 }
 
 void test_get_sform_index_returns_index_3(void) {
-    Ar_conf cfgv[] = { 
+    ar_conf cfgv[] = { 
         {'b', "blank", "show whitespace", 0},
         {'c', "copy", "", 0},
         {'d', "delete", NULL, 0}
     };
-    int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     int a = get_sform_index(parser, 'd');
     ar_close(parser);
@@ -184,8 +184,8 @@ void test_get_sform_index_returns_index_3(void) {
 }
 
 void test_get_sform_index_returns_notFound_1(void) {
-    Ar_conf cfgv[] = {};
-    int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
+    ar_conf cfgv[] = {};
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     int a = get_sform_index(parser, 'a');
     ar_close(parser);
@@ -193,10 +193,10 @@ void test_get_sform_index_returns_notFound_1(void) {
 }
 
 void test_get_sform_index_returns_notFound_2(void) {
-    Ar_conf cfgv[] = { 
+    ar_conf cfgv[] = { 
         {'b', "blank", "show whitespace", 0}
     };
-    int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     int a = get_sform_index(parser, 'a');
     ar_close(parser);
@@ -204,12 +204,12 @@ void test_get_sform_index_returns_notFound_2(void) {
 }
 
 void test_get_sform_index_returns_notFound_3(void) {
-    Ar_conf cfgv[] = { 
+    ar_conf cfgv[] = { 
         {'b', "blank", "show whitespace", 0},
         {'c', "copy", "", 0},
         {'d', "delete", NULL, 0}
     };
-    int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     int a = get_sform_index(parser, 'a');
     ar_close(parser);
@@ -217,12 +217,12 @@ void test_get_sform_index_returns_notFound_3(void) {
 }
 
 void test_get_lform_index_returns_index_1(void) {
-    Ar_conf cfgv[] = { 
+    ar_conf cfgv[] = { 
         {'b', NULL, "show whitespace", 0},
         {'c', "copy", "", 0},
         {'d', "delete", NULL, 0}
     };
-    int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     int a = get_lform_index(parser, "--copy");
     ar_close(parser);
@@ -230,12 +230,12 @@ void test_get_lform_index_returns_index_1(void) {
 }
 
 void test_get_lform_index_returns_notFound_1(void) {
-    Ar_conf cfgv[] = { 
+    ar_conf cfgv[] = { 
         {'b', "blank", "show whitespace", 0},
         {'c', "copy", "", 0},
         {'d', "delete", NULL, 0}
     };
-    int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     int a = get_lform_index(parser, NULL);
     ar_close(parser);
@@ -243,8 +243,8 @@ void test_get_lform_index_returns_notFound_1(void) {
 }
 
 void test_get_lform_index_returns_notFound_2(void) {
-    Ar_conf cfgv[] = {};
-    int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
+    ar_conf cfgv[] = {};
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     int a = get_lform_index(parser, NULL);
     ar_close(parser);
@@ -252,12 +252,12 @@ void test_get_lform_index_returns_notFound_2(void) {
 }
 
 void test_add_value_returns_success_1(void) {
-    Ar_conf cfgv[] = { 
+    ar_conf cfgv[] = { 
         {'b', "blank", "show whitespace", 0},
         {'c', "copy", "", 0 | AR_ONE_VAL},
         {'d', "delete", NULL, 0}
     };
-    int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     ar_exit_on_error(parser, false);
     int a = add_value(parser, 1, "haha");
@@ -266,12 +266,12 @@ void test_add_value_returns_success_1(void) {
 }
 
 void test_add_value_returns_success_2(void) {
-    Ar_conf cfgv[] = { 
+    ar_conf cfgv[] = { 
         {'b', "blank", "show whitespace", 0},
         {'c', "copy", "", 0 | AR_MULTI_VAL},
         {'d', "delete", NULL, 0}
     };
-    int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     ar_exit_on_error(parser, false);
     add_value(parser, 1, "haha");
@@ -281,12 +281,12 @@ void test_add_value_returns_success_2(void) {
 }
 
 void test_add_value_returns_tm_args_1(void) {
-    Ar_conf cfgv[] = { 
+    ar_conf cfgv[] = { 
         {'b', "blank", "show whitespace", 0},
         {'c', "copy", "", 0 | AR_ONE_VAL},
         {'d', "delete", NULL, 0}
     };
-    int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     ar_exit_on_error(parser, false);
     add_value(parser, 1, "haha");

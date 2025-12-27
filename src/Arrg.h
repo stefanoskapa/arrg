@@ -17,58 +17,28 @@ typedef struct ar_parser ar_parser;
 #define AR_MULTI_VAL   0b00000000000000000000000000000100
 #define AR_MANDATORY   0b00000000000000000000000000000001
 
-/*
- *  USAGE
- *  -----
- *
- *  Stage 1: configuration
- *  This stage involves the necessary and optional
- *  steps before calling handle(). At the very least,
- *  we need to create an array of type map (cfgv) that 
- *  defines the acceptable options for the consuming 
- *  program. Further we can chose to make use and configure 
- *  the built-in functionality for --help and --version.
- *
- *  Stage 2: processing
- *  Here we just need to call handle(), pass our 
- *  cfgv array and its length as well as argc and argv
- *  from main()
- *
- *  Stage 3: value retrieval
- *  After calling handle, the consuming program can retrieve
- *  the parsed values for each option with the help of:
- *
- *    - bool is_provided(int idx);
- *    - char **get_values(int opt_idx);
- *    - int get_val_len(int opt_idx);
- *
- *    where opt_idx is the option index in the cfgv array.
- *
- *  When done using the library, we free up resources by
- *  calling arrg_close().
- */
-
-typedef struct Ar_conf {
+typedef struct ar_conf {
     char sform; //short form options, e.g. 'e'
     char *lform; //long form options e.g. 'supress', 'dry-run'
     char *description; // command description for help screen
     uint32_t flags; // use bitwise OR with the AR_* macros
-} Ar_conf;
+} ar_conf;
+
 
 /*
  * Optional built-in --help functionality.
  * To use, pass it into the cfgv array.
  */
-extern const Ar_conf ARRG_HELP;
+extern const ar_conf ARRG_HELP;
 
 /*
  * Optional built-in --version functionality.
  * To use, pass it into the cfgv array.
  */
-extern const Ar_conf ARRG_VERSION;
+extern const ar_conf ARRG_VERSION;
 
 
-ar_parser *ar_init(int argc, char **argv, int cfgc, Ar_conf *cfgv);
+ar_parser *ar_init(int argc, char **argv, int cfgc, ar_conf *cfgv);
 /**
  * Processes CLI argumets and cfgv configuration
  * Needs to be called before 
@@ -79,7 +49,6 @@ ar_parser *ar_init(int argc, char **argv, int cfgc, Ar_conf *cfgv);
  * @param cfgv config array
  */
 void ar_parse(ar_parser *parser);
-void show_supplied(int cfgc, Ar_conf cfgv[]);
 
 /**
  * Free's up allocated memory. Should be called
@@ -140,39 +109,5 @@ char **ar_get_values(ar_parser *parser, int opt_idx);
  */
 int ar_get_val_len(ar_parser *parser, int opt_idx);
 
-void ar_exit_on_error(ar_parser *parser, bool b);
-
-typedef struct Array {
-    char** items;
-    size_t capacity;
-    size_t size;
-} Array;
-
-typedef struct Values {
-    Array *items;
-    bool supplied;
-} Values;
-
-static int find_max_lform_size(ar_parser *parser);
-static void show_help(ar_parser *parser);
-static void print_wrapped(char *text, int offset, int);
-static bool lform_equals(char *arg, char *lform); 
-static bool is_lform(char *arg);
-static bool is_sform(char *arg);
-static int get_sform_index(ar_parser *parser, char arg);
-static int get_lform_index(ar_parser *parser, char *arg);
-static void check_ptr(void *ptr);
-static void fail(char *reason);
-static int add_value(ar_parser *parser, int index, char *value);
-static void add_positional(ar_parser *parser,char *arg);
-static bool handle_special(ar_parser *parser, char *arg);
-static bool handle_sform(ar_parser *parser, char *arg, int arg_len, int i);
-static bool handle_lform(ar_parser *parser, char *arg, int arg_len, int i);
-static bool is_positional(Ar_conf);
-//dynamic array
-static Array *da_init();
-static void da_print(Array array);
-static void da_add(Array *array, char *str);
-static void da_free(Array *array);
 void ar_exit_on_error(ar_parser *parser, bool b);
 #endif
