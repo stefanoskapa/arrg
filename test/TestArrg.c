@@ -216,7 +216,6 @@ void test_get_sform_index_returns_notFound_3(void) {
     TEST_ASSERT_EQUAL_INT(-1, a);
 }
 
-
 void test_get_lform_index_returns_index_1(void) {
     Ar_conf cfgv[] = { 
         {'b', NULL, "show whitespace", 0},
@@ -252,7 +251,6 @@ void test_get_lform_index_returns_notFound_2(void) {
     TEST_ASSERT_EQUAL_INT(-1, a);
 }
 
-
 void test_add_value_returns_success_1(void) {
     Ar_conf cfgv[] = { 
         {'b', "blank", "show whitespace", 0},
@@ -263,6 +261,21 @@ void test_add_value_returns_success_1(void) {
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     ar_exit_on_error(parser, false);
     int a = add_value(parser, 1, "haha");
+    ar_close(parser);
+    TEST_ASSERT_EQUAL_INT(SUCCESS, a);
+}
+
+void test_add_value_returns_success_2(void) {
+    Ar_conf cfgv[] = { 
+        {'b', "blank", "show whitespace", 0},
+        {'c', "copy", "", 0 | AR_MULTI_VAL},
+        {'d', "delete", NULL, 0}
+    };
+    int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
+    ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
+    ar_exit_on_error(parser, false);
+    add_value(parser, 1, "haha");
+    int a = add_value(parser, 1, "hoho");
     ar_close(parser);
     TEST_ASSERT_EQUAL_INT(SUCCESS, a);
 }
@@ -281,13 +294,9 @@ void test_add_value_returns_tm_args_1(void) {
     ar_close(parser);
     TEST_ASSERT_EQUAL_INT(TM_ARGS, a);
 }
-void setUp(void) {
-    // Runs before each test
-}
 
-void tearDown(void) {
-    // Runs after each test
-}
+void setUp(void) {}
+void tearDown(void) {}
 
 int main(void) {
     UNITY_BEGIN();
@@ -325,6 +334,7 @@ int main(void) {
     RUN_TEST(test_get_lform_index_returns_notFound_1);
     RUN_TEST(test_get_lform_index_returns_notFound_2);
     RUN_TEST(test_add_value_returns_success_1);
+    RUN_TEST(test_add_value_returns_success_2);
     RUN_TEST(test_add_value_returns_tm_args_1);
     return UNITY_END();
 }
