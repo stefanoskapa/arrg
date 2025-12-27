@@ -140,6 +140,8 @@ char **ar_get_values(ar_parser *parser, int opt_idx);
  */
 int ar_get_val_len(ar_parser *parser, int opt_idx);
 
+void ar_exit_on_error(ar_parser *parser, bool b);
+
 typedef struct Array {
     char** items;
     size_t capacity;
@@ -161,7 +163,7 @@ static int get_sform_index(ar_parser *parser, char arg);
 static int get_lform_index(ar_parser *parser, char *arg);
 static void check_ptr(void *ptr);
 static void fail(char *reason);
-static void add_value(ar_parser *parser, int index, char *value);
+static int add_value(ar_parser *parser, int index, char *value);
 static void add_positional(ar_parser *parser,char *arg);
 static bool handle_special(ar_parser *parser, char *arg);
 static bool handle_sform(ar_parser *parser, char *arg, int arg_len, int i);
@@ -172,4 +174,5 @@ static Array *da_init();
 static void da_print(Array array);
 static void da_add(Array *array, char *str);
 static void da_free(Array *array);
+void ar_exit_on_error(ar_parser *parser, bool b);
 #endif

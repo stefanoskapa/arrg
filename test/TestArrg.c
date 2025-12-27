@@ -142,13 +142,14 @@ void test_is_lform_returns_true_3(void) {
     bool a = is_lform("--dry-run");
     TEST_ASSERT_TRUE(a);
 }
-/*
+
 void test_get_sform_index_returns_index_1(void) {
     Ar_conf cfgv[] = { 
         {'b', "blank", "show whitespace", 0}
     };
     int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
-    int a = get_sform_index(cfgc, cfgv, 'b');
+    ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
+    int a = get_sform_index(parser, 'b');
     TEST_ASSERT_EQUAL_INT(0, a);
 }
 
@@ -158,7 +159,8 @@ void test_get_sform_index_returns_index_2(void) {
         {'b', "blank", "show whitespace", 0} 
     };
     int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
-    int a = get_sform_index(cfgc, cfgv, 'b');
+    ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
+    int a = get_sform_index(parser, 'b');
     TEST_ASSERT_EQUAL_INT(1, a);
 }
 
@@ -169,14 +171,16 @@ void test_get_sform_index_returns_index_3(void) {
         {'d', "delete", NULL, 0}
     };
     int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
-    int a = get_sform_index(cfgc, cfgv, 'd');
+    ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
+    int a = get_sform_index(parser, 'd');
     TEST_ASSERT_EQUAL_INT(2, a);
 }
 
 void test_get_sform_index_returns_notFound_1(void) {
     Ar_conf cfgv[] = {};
     int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
-    int a = get_sform_index(cfgc, cfgv, 'a');
+    ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
+    int a = get_sform_index(parser, 'a');
     TEST_ASSERT_EQUAL_INT(-1, a);
 }
 
@@ -185,7 +189,8 @@ void test_get_sform_index_returns_notFound_2(void) {
         {'b', "blank", "show whitespace", 0}
     };
     int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
-    int a = get_sform_index(cfgc, cfgv, 'a');
+    ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
+    int a = get_sform_index(parser, 'a');
     TEST_ASSERT_EQUAL_INT(-1, a);
 }
 
@@ -196,7 +201,8 @@ void test_get_sform_index_returns_notFound_3(void) {
         {'d', "delete", NULL, 0}
     };
     int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
-    int a = get_sform_index(cfgc, cfgv, 'a');
+    ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
+    int a = get_sform_index(parser, 'a');
     TEST_ASSERT_EQUAL_INT(-1, a);
 }
 
@@ -208,7 +214,8 @@ void test_get_lform_index_returns_index_1(void) {
         {'d', "delete", NULL, 0}
     };
     int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
-    int a = get_lform_index(cfgc, cfgv, "--copy");
+    ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
+    int a = get_lform_index(parser, "--copy");
     TEST_ASSERT_EQUAL_INT(1, a);
 }
 
@@ -219,22 +226,46 @@ void test_get_lform_index_returns_notFound_1(void) {
         {'d', "delete", NULL, 0}
     };
     int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
-    int a = get_lform_index(cfgc, cfgv, NULL);
+    ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
+    int a = get_lform_index(parser, NULL);
     TEST_ASSERT_EQUAL_INT(-1, a);
 }
 
 void test_get_lform_index_returns_notFound_2(void) {
     Ar_conf cfgv[] = {};
     int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
-    int a = get_lform_index(cfgc, cfgv, NULL);
+    ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
+    int a = get_lform_index(parser, NULL);
     TEST_ASSERT_EQUAL_INT(-1, a);
 }
 
 
+void test_add_value_returns_success_1(void) {
+    Ar_conf cfgv[] = { 
+        {'b', "blank", "show whitespace", 0},
+        {'c', "copy", "", 0 | AR_ONE_VAL},
+        {'d', "delete", NULL, 0}
+    };
+    int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
+    ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
+    ar_exit_on_error(parser, false);
+    int a = add_value(parser, 1, "haha");
+    TEST_ASSERT_EQUAL_INT(SUCCESS, a);
+}
 
-
-*/
-
+void test_add_value_returns_tm_args_1(void) {
+    Ar_conf cfgv[] = { 
+        {'b', "blank", "show whitespace", 0},
+        {'c', "copy", "", 0 | AR_ONE_VAL},
+        {'d', "delete", NULL, 0}
+    };
+    int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
+    ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
+    ar_exit_on_error(parser, false);
+    add_value(parser, 1, "haha");
+    int a = add_value(parser, 1, "hoho");
+    TEST_ASSERT_EQUAL_INT(TM_ARGS, a);
+}
 void setUp(void) {
     // Runs before each test
 }
@@ -269,7 +300,7 @@ int main(void) {
     RUN_TEST(test_is_lform_returns_true_1);
     RUN_TEST(test_is_lform_returns_true_2);
     RUN_TEST(test_is_lform_returns_true_3);
- /*   RUN_TEST(test_get_sform_index_returns_index_1);
+    RUN_TEST(test_get_sform_index_returns_index_1);
     RUN_TEST(test_get_sform_index_returns_index_2);
     RUN_TEST(test_get_sform_index_returns_index_3);
     RUN_TEST(test_get_sform_index_returns_notFound_1);
@@ -277,6 +308,8 @@ int main(void) {
     RUN_TEST(test_get_sform_index_returns_notFound_3);
     RUN_TEST(test_get_lform_index_returns_index_1);
     RUN_TEST(test_get_lform_index_returns_notFound_1);
-    RUN_TEST(test_get_lform_index_returns_notFound_2); */
+    RUN_TEST(test_get_lform_index_returns_notFound_2);
+    RUN_TEST(test_add_value_returns_success_1);
+    RUN_TEST(test_add_value_returns_tm_args_1);
     return UNITY_END();
 }

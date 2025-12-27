@@ -12,6 +12,12 @@
 const Ar_conf ARRG_HELP = {'\0', "help", "display this help and exit", SPECIAL_H};
 const Ar_conf ARRG_VERSION = {'\0', "version", "display version and exit", SPECIAL_V};
 
+typedef enum ret_code {
+    SUCCESS,
+    NO_ARGS,
+    TM_ARGS
+} ret_code;
+
 typedef struct ar_parser {
     int argc;
     char **argv;
@@ -27,23 +33,28 @@ typedef struct ar_parser {
     char *util_description;
     bool end_of_options;
     int values_len;
+    bool exit_on_error;
+    ret_code code;
 } ar_parser;
 
 ar_parser *ar_init(int argc, char **argv, int cfgc, Ar_conf *cfgv) {
-   ar_parser *parser = malloc(sizeof(ar_parser)); 
-   parser->argc = argc;
-   parser->argv = argv;
-   parser->cfgc = cfgc;
-   parser->cfgv = cfgv;
-   parser->positional_idx = -1;
-   parser->default_help = false;
-   parser->has_options = false;
-   parser->values = NULL;
-   parser->util_name = NULL;
-   parser->util_version = NULL;
-   parser->util_description = NULL;
-   parser->end_of_options = false;
-   parser->values_len = 0;
+    ar_parser *parser = malloc(sizeof(ar_parser)); 
+    parser->argc = argc;
+    parser->argv = argv;
+    parser->cfgc = cfgc;
+    parser->cfgv = cfgv;
+    parser->positional_idx = -1;
+    parser->default_help = false;
+    parser->has_options = false;
+    parser->values = NULL;
+    parser->util_name = NULL;
+    parser->util_version = NULL;
+    parser->util_description = NULL;
+    parser->end_of_options = false;
+    parser->values_len = 0;
+    parser->exit_on_error = true;
+    parser->code = SUCCESS;
+
     parser->values = malloc(cfgc * sizeof(Values));
     check_ptr(parser->values);
     for (int i = 0; i < cfgc; i++) { // initialize empty arrays
@@ -63,6 +74,10 @@ ar_parser *ar_init(int argc, char **argv, int cfgc, Ar_conf *cfgv) {
         }
     }
    return parser;
+}
+
+void ar_exit_on_error(ar_parser *parser, bool b) {
+    parser->exit_on_error = b;
 }
 
 void ar_program_version(ar_parser *parser, char *ver) {
@@ -243,20 +258,23 @@ static void add_positional(ar_parser *parser, char *arg) {
     add_value(parser, parser->positional_idx, arg);
 }
 
-static void add_value(ar_parser *parser, int index, char *value) {
+static int add_value(ar_parser *parser, int index, char *value) {
     if ((parser->cfgv[index].flags & VAL_MASK) == AR_ONE_VAL) {
         if (parser->values[index].items->size > 0) {
-            if( index == parser->positional_idx) {
-                fprintf(stderr, "Supplying more than one %s is not allowed\n", parser->cfgv[parser->positional_idx].description);
+            char *fail_opt = (index == parser->positional_idx) ? parser->cfgv[parser->positional_idx].description : parser->cfgv[index].lform;
+            if (parser->exit_on_error == true) {
+                fprintf(stderr, "Providing more than one %s is not allowed\n", fail_opt);
+                exit(TM_ARGS);
             } else {
-                fprintf(stderr, "Option %s doesn't accept multiple values\n", parser->cfgv[index].lform);
+                return TM_ARGS;
             }
-            exit(1);
         }
     }
     da_add(parser->values[index].items, value); 
     parser->values[index].supplied = true;
+    return SUCCESS;
 }
+
 /*
    Accepts a user-supplied lform (e.g. --include) and
    return the index in the spec or -1 if it is
