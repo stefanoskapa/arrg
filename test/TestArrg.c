@@ -11,6 +11,7 @@ void test_find_max_lform_size_returns_longest_lform_length(void) {
     int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv); 
     int a = find_max_lform_size(parser);
+    ar_close(parser);
     TEST_ASSERT_EQUAL_INT(11, a);
 }
 
@@ -22,6 +23,7 @@ void test_find_max_lform_size_returns_zero_1(void) {
     int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv); 
     int a = find_max_lform_size(parser);
+    ar_close(parser);
     TEST_ASSERT_EQUAL_INT(0, a);
 }
 
@@ -33,12 +35,14 @@ void test_find_max_lform_size_returns_zero_2(void) {
     int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv); 
     int a = find_max_lform_size(parser);
+    ar_close(parser);
     TEST_ASSERT_EQUAL_INT(0, a);
 }
 
 void test_find_max_lform_size_returns_zero_3(void) {
     ar_parser *parser = ar_init(0, NULL, 0, NULL); 
     int a = find_max_lform_size(parser);
+    ar_close(parser);
     TEST_ASSERT_EQUAL_INT(0, a);
 }
 
@@ -150,6 +154,7 @@ void test_get_sform_index_returns_index_1(void) {
     int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     int a = get_sform_index(parser, 'b');
+    ar_close(parser);
     TEST_ASSERT_EQUAL_INT(0, a);
 }
 
@@ -161,6 +166,7 @@ void test_get_sform_index_returns_index_2(void) {
     int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     int a = get_sform_index(parser, 'b');
+    ar_close(parser);
     TEST_ASSERT_EQUAL_INT(1, a);
 }
 
@@ -173,6 +179,7 @@ void test_get_sform_index_returns_index_3(void) {
     int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     int a = get_sform_index(parser, 'd');
+    ar_close(parser);
     TEST_ASSERT_EQUAL_INT(2, a);
 }
 
@@ -181,6 +188,7 @@ void test_get_sform_index_returns_notFound_1(void) {
     int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     int a = get_sform_index(parser, 'a');
+    ar_close(parser);
     TEST_ASSERT_EQUAL_INT(-1, a);
 }
 
@@ -191,6 +199,7 @@ void test_get_sform_index_returns_notFound_2(void) {
     int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     int a = get_sform_index(parser, 'a');
+    ar_close(parser);
     TEST_ASSERT_EQUAL_INT(-1, a);
 }
 
@@ -203,6 +212,7 @@ void test_get_sform_index_returns_notFound_3(void) {
     int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     int a = get_sform_index(parser, 'a');
+    ar_close(parser);
     TEST_ASSERT_EQUAL_INT(-1, a);
 }
 
@@ -216,6 +226,7 @@ void test_get_lform_index_returns_index_1(void) {
     int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     int a = get_lform_index(parser, "--copy");
+    ar_close(parser);
     TEST_ASSERT_EQUAL_INT(1, a);
 }
 
@@ -228,6 +239,7 @@ void test_get_lform_index_returns_notFound_1(void) {
     int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     int a = get_lform_index(parser, NULL);
+    ar_close(parser);
     TEST_ASSERT_EQUAL_INT(-1, a);
 }
 
@@ -236,6 +248,7 @@ void test_get_lform_index_returns_notFound_2(void) {
     int cfgc = sizeof(cfgv) / sizeof(Ar_conf);
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     int a = get_lform_index(parser, NULL);
+    ar_close(parser);
     TEST_ASSERT_EQUAL_INT(-1, a);
 }
 
@@ -250,6 +263,7 @@ void test_add_value_returns_success_1(void) {
     ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
     ar_exit_on_error(parser, false);
     int a = add_value(parser, 1, "haha");
+    ar_close(parser);
     TEST_ASSERT_EQUAL_INT(SUCCESS, a);
 }
 
@@ -264,6 +278,7 @@ void test_add_value_returns_tm_args_1(void) {
     ar_exit_on_error(parser, false);
     add_value(parser, 1, "haha");
     int a = add_value(parser, 1, "hoho");
+    ar_close(parser);
     TEST_ASSERT_EQUAL_INT(TM_ARGS, a);
 }
 void setUp(void) {

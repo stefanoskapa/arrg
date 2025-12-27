@@ -156,6 +156,7 @@ void ar_close(ar_parser *parser) {
         }
     }
     free(parser->values);
+    free(parser);
 }
 
 
