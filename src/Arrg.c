@@ -68,7 +68,6 @@ static int handle_sform(ar_parser *parser, char *arg, int *arg_idx);
 static int handle_lform(ar_parser *parser, char *arg, int *arg_idx);
 static bool is_positional(ar_conf);
 static Array *da_init();
-static void da_print(Array array);
 static void da_add(Array *array, char *str);
 static void da_free(Array *array);
 
@@ -509,12 +508,6 @@ static void da_add(Array *array, char *str) {
     memcpy(word, str, s);
     array->items[array->size] = word;
     array->size++;
-}
-
-static void da_print(Array array) {
-    for (int i = 0; i < array.size; i++) {
-        printf("%2d: %s\n", i, array.items[i]); 
-    }
 }
 
 static void da_free(Array *array) {
