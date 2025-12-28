@@ -14,10 +14,11 @@ const ar_conf ARRG_VERSION = {'\0', "version", "display version and exit", SPECI
 
 typedef enum ret_code {
     SUCCESS,
-    NO_ARGS,
+    NO_VAL,
     TM_VALS,
     TM_POS_ARGS,
-    NO_POS_ARGS
+    NO_POS_ARGS,
+    INV_OPT
 } ret_code;
 
 typedef struct Array {
@@ -63,8 +64,8 @@ static void fail(char *reason);
 static int add_value(ar_parser *parser, int index, char *value);
 static int add_positional(ar_parser *parser,char *arg);
 static bool handle_special(ar_parser *parser, char *arg);
-static bool handle_sform(ar_parser *parser, char *arg, int arg_len, int i);
-static bool handle_lform(ar_parser *parser, char *arg, int arg_len, int i);
+static int handle_sform(ar_parser *parser, char *arg, int arg_len, int *i);
+static int handle_lform(ar_parser *parser, char *arg, int arg_len, int *i);
 static bool is_positional(ar_conf);
 static Array *da_init();
 static void da_print(Array array);
@@ -156,11 +157,9 @@ void ar_parse(ar_parser *parser) {
         if (result) continue;
 
         if (is_lform(arg) ) {       
-            result = handle_lform(parser, arg, arg_len, i);
-            if (result) i++;
+            handle_lform(parser, arg, arg_len, &i);
         } else if (is_sform(arg)) {            
-            result = handle_sform(parser, arg, arg_len, i);
-            if (result) i++;
+            handle_sform(parser, arg, arg_len, &i);
         } else { 
             add_positional(parser, arg);
         }
@@ -224,12 +223,15 @@ static bool handle_special(ar_parser *parser, char *arg) {
     return false;
 }
 
-// true means increment i
-static bool handle_lform(ar_parser *parser, char *arg, int arg_len, int i) {
+static int handle_lform(ar_parser *parser, char *arg, int arg_len, int *i) {
     int index = get_lform_index(parser, arg);
     if (index == -1) {
-        fprintf(stderr, "%s is not a valid option\n", arg);
-        exit(1);
+        if (parser->exit_on_error == true) {
+            fprintf(stderr, "--%s is not a valid option\n", arg);
+            exit(INV_OPT);
+        } else {
+            return INV_OPT;
+        }
     }
     if ((parser->cfgv[index].flags & VAL_MASK) != AR_NO_VAL) { // option needs at least one value
         int eq_idx = strlen(parser->cfgv[index].lform) + 2; //length of arg spec+2 and index of = (if exists)
@@ -239,40 +241,58 @@ static bool handle_lform(ar_parser *parser, char *arg, int arg_len, int i) {
             check_ptr(new_val);
             memcpy(new_val, arg + eq_idx + 1, new_val_len); 
             add_value(parser, index, new_val);
-        } else if (i + 1 < parser->argc) { // value is the next argument
-            add_value(parser, index, parser->argv[i + 1]);
-            return true; 
+        } else if (*i + 1 < parser->argc) { // value is the next argument
+            add_value(parser, index, parser->argv[*i + 1]);
+            (*i)++; 
+            return SUCCESS; 
         } else {
-            fprintf(stderr, "Option %s was not supplied a value\n", arg);
-            exit(1);
+            if (parser->exit_on_error == true) {
+                fprintf(stderr, "Option %s was not supplied a value\n", arg);
+                exit(NO_VAL);
+            } else {
+                return NO_VAL;
+            }
         }
     } else { //option doesn't accept values
         int argsize = strlen(arg); //size of user supplied argument
         if (argsize > strlen(parser->cfgv[index].lform) + 2) {
-            fprintf(stderr, "invalid option %s\n", arg);
-            exit(1);
+            if (parser->exit_on_error == true) {
+                fprintf(stderr, "invalid option %s\n", arg);
+                exit(INV_OPT);
+            } else {
+                return INV_OPT;
+            }
         }
         parser->values[index].supplied = true;
     }
-    return false;
+    return SUCCESS;
 }
 
-static bool handle_sform(ar_parser *parser, char *arg, int arg_len, int i) {
+static int handle_sform(ar_parser *parser, char *arg, int arg_len, int *i) {
     for (int j = 1; j < arg_len; j++) { // iterate over all characters 
         int index = get_sform_index(parser, arg[j]);
         if (index == -1) {
-            fprintf(stderr, "-%c is not a valid option\n", arg[j]);
-            exit(1);
+            if (parser->exit_on_error == true) {
+                fprintf(stderr, "-%c is not a valid option\n", arg[j]);
+                exit(INV_OPT);
+            } else {
+                return INV_OPT;
+            }
         }
         if ((parser->cfgv[index].flags & VAL_MASK) != AR_NO_VAL) { //needs at least one value. The value will either be
 
             if (j == arg_len - 1) {  // value MUST be the next argument
-                if (i == parser->argc - 1) { // no val supplied
-                    fprintf(stderr, "Option %s was not supplied a value\n", arg);
-                    exit(1);
+                if (*i == parser->argc - 1) { // no val supplied
+                    if (parser->exit_on_error == true) {
+                        fprintf(stderr, "Option %s was not supplied a value\n", arg);
+                        exit(NO_VAL);
+                    } else {
+                        return NO_VAL;
+                    }
                 } else { //value is next arg
-                    add_value(parser, index, parser->argv[i + 1]);
-                    return true; 
+                    add_value(parser, index, parser->argv[*i + 1]);
+                    (*i)++;
+                    return SUCCESS; 
                 }
             } else { //value is supplied in-place
                 char *new_val=malloc(arg_len - j);
@@ -285,7 +305,7 @@ static bool handle_sform(ar_parser *parser, char *arg, int arg_len, int i) {
             parser->values[index].supplied = true;
         }
     }
-    return false;
+    return SUCCESS; 
 }
 
 static int add_positional(ar_parser *parser, char *arg) {
