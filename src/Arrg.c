@@ -15,7 +15,9 @@ const ar_conf ARRG_VERSION = {'\0', "version", "display version and exit", SPECI
 typedef enum ret_code {
     SUCCESS,
     NO_ARGS,
-    TM_ARGS
+    TM_VALS,
+    TM_POS_ARGS,
+    NO_POS_ARGS
 } ret_code;
 
 typedef struct Array {
@@ -59,7 +61,7 @@ static int get_lform_index(ar_parser *parser, char *arg);
 static void check_ptr(void *ptr);
 static void fail(char *reason);
 static int add_value(ar_parser *parser, int index, char *value);
-static void add_positional(ar_parser *parser,char *arg);
+static int add_positional(ar_parser *parser,char *arg);
 static bool handle_special(ar_parser *parser, char *arg);
 static bool handle_sform(ar_parser *parser, char *arg, int arg_len, int i);
 static bool handle_lform(ar_parser *parser, char *arg, int arg_len, int i);
@@ -286,22 +288,37 @@ static bool handle_sform(ar_parser *parser, char *arg, int arg_len, int i) {
     return false;
 }
 
-static void add_positional(ar_parser *parser, char *arg) {
+static int add_positional(ar_parser *parser, char *arg) {
     if (parser->positional_idx == -1) {
-        fail("Positional arguments are not supported");
+        if (parser->exit_on_error == true) {
+            fprintf(stderr, "Positional arguments are not supported\n");
+            exit(NO_POS_ARGS);
+        } else {
+            return NO_POS_ARGS;
+        }
     }
-    add_value(parser, parser->positional_idx, arg);
+    int a = add_value(parser, parser->positional_idx, arg);
+    return a;
 }
 
 static int add_value(ar_parser *parser, int index, char *value) {
     if ((parser->cfgv[index].flags & VAL_MASK) == AR_ONE_VAL) {
         if (parser->values[index].items->size > 0) {
             char *fail_opt = (index == parser->positional_idx) ? parser->cfgv[parser->positional_idx].description : parser->cfgv[index].lform;
-            if (parser->exit_on_error == true) {
-                fprintf(stderr, "Providing more than one %s is not allowed\n", fail_opt);
-                exit(TM_ARGS);
+            if (is_positional(parser->cfgv[index])) {
+                if (parser->exit_on_error == true) {
+                    fprintf(stderr, "Providing more than one %s is not allowed\n", fail_opt);
+                    exit(TM_POS_ARGS);
+                } else {
+                    return TM_POS_ARGS;
+                }
             } else {
-                return TM_ARGS;
+                if (parser->exit_on_error == true) {
+                    fprintf(stderr, "-%c/--%s only accepts a single value\n", parser->cfgv[index].sform, parser->cfgv[index].lform);
+                    exit(TM_VALS);
+                } else {
+                    return TM_VALS;
+                }
             }
         }
     }

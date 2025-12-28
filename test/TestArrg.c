@@ -280,7 +280,7 @@ void test_add_value_returns_success_2(void) {
     TEST_ASSERT_EQUAL_INT(SUCCESS, a);
 }
 
-void test_add_value_returns_tm_args_1(void) {
+void test_add_value_returns_tm_vals_1(void) {
     ar_conf cfgv[] = { 
         {'b', "blank", "show whitespace", 0},
         {'c', "copy", "", 0 | AR_ONE_VAL},
@@ -292,7 +292,65 @@ void test_add_value_returns_tm_args_1(void) {
     add_value(parser, 1, "haha");
     int a = add_value(parser, 1, "hoho");
     ar_close(parser);
-    TEST_ASSERT_EQUAL_INT(TM_ARGS, a);
+    TEST_ASSERT_EQUAL_INT(TM_VALS, a);
+}
+
+void test_add_value_returns_tm_pos_args_1(void) {
+    ar_conf cfgv[] = { 
+        {'b', "blank", "show whitespace", 0},
+        {'\0', NULL, "FILE", 0 | AR_ONE_VAL},
+        {'d', "delete", NULL, 0}
+    };
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
+    ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
+    ar_exit_on_error(parser, false);
+    add_value(parser, 1, "haha");
+    int a = add_value(parser, 1, "hoho");
+    ar_close(parser);
+    TEST_ASSERT_EQUAL_INT(TM_POS_ARGS, a);
+}
+
+
+void test_add_positional_returns_success_1(void) {
+    ar_conf cfgv[] = { 
+        {'b', "blank", "show whitespace", 0},
+        {'\0', NULL, "FILE", 0 | AR_ONE_VAL},
+        {'d', "delete", NULL, 0}
+    };
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
+    ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
+    ar_exit_on_error(parser, false);
+    int a = add_positional(parser, "hoho");
+    ar_close(parser);
+    TEST_ASSERT_EQUAL_INT(SUCCESS, a);
+}
+
+void test_add_positional_returns_no_pos_args_1(void) {
+    ar_conf cfgv[] = { 
+        {'b', "blank", "show whitespace", 0},
+        {'d', "delete", NULL, 0}
+    };
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
+    ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
+    ar_exit_on_error(parser, false);
+    int a = add_positional(parser, "hoho");
+    ar_close(parser);
+    TEST_ASSERT_EQUAL_INT(NO_POS_ARGS, a);
+}
+
+void test_add_positional_returns_tm_pos_args_1(void) {
+    ar_conf cfgv[] = { 
+        {'b', "blank", "show whitespace", 0},
+        {'\0', NULL, "FILE", 0 | AR_ONE_VAL},
+        {'d', "delete", NULL, 0}
+    };
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
+    ar_parser *parser = ar_init(0, NULL, cfgc, cfgv);
+    ar_exit_on_error(parser, false);
+    int a = add_positional(parser, "hoho");
+    a = add_positional(parser, "haha");
+    ar_close(parser);
+    TEST_ASSERT_EQUAL_INT(TM_POS_ARGS, a);
 }
 
 void setUp(void) {}
@@ -335,6 +393,10 @@ int main(void) {
     RUN_TEST(test_get_lform_index_returns_notFound_2);
     RUN_TEST(test_add_value_returns_success_1);
     RUN_TEST(test_add_value_returns_success_2);
-    RUN_TEST(test_add_value_returns_tm_args_1);
+    RUN_TEST(test_add_value_returns_tm_vals_1);
+    RUN_TEST(test_add_value_returns_tm_pos_args_1);
+    RUN_TEST(test_add_positional_returns_success_1);
+    RUN_TEST(test_add_positional_returns_no_pos_args_1);
+    RUN_TEST(test_add_positional_returns_tm_pos_args_1);
     return UNITY_END();
 }
