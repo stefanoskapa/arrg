@@ -48,7 +48,7 @@ ar_parser *ar_init(int argc, char **argv, int cfgc, ar_conf *cfgv);
  * @param cfgc item count in config array
  * @param cfgv config array
  */
-void ar_parse(ar_parser *parser);
+int ar_parse(ar_parser *parser);
 
 /**
  * Free's up allocated memory. Should be called
