@@ -64,8 +64,8 @@ static void fail(char *reason);
 static int add_value(ar_parser *parser, int index, char *value);
 static int add_positional(ar_parser *parser,char *arg);
 static bool handle_special(ar_parser *parser, char *arg);
-static int handle_sform(ar_parser *parser, char *arg, int arg_len, int *i);
-static int handle_lform(ar_parser *parser, char *arg, int arg_len, int *i);
+static int handle_sform(ar_parser *parser, char *arg, int *arg_idx);
+static int handle_lform(ar_parser *parser, char *arg, int *arg_idx);
 static bool is_positional(ar_conf);
 static Array *da_init();
 static void da_print(Array array);
@@ -152,14 +152,14 @@ int ar_get_val_len(ar_parser *parser, int opt_idx) {
 void ar_parse(ar_parser *parser) {
     for (int i = 1; i < parser->argc; i++) {
         char *arg = parser->argv[i]; 
-        int arg_len = strlen(arg);
+        //int arg_len = strlen(arg);
         bool result = handle_special(parser, arg);
         if (result) continue;
 
         if (is_lform(arg) ) {       
-            handle_lform(parser, arg, arg_len, &i);
+            handle_lform(parser, arg, &i);
         } else if (is_sform(arg)) {            
-            handle_sform(parser, arg, arg_len, &i);
+            handle_sform(parser, arg, &i);
         } else { 
             add_positional(parser, arg);
         }
@@ -223,7 +223,9 @@ static bool handle_special(ar_parser *parser, char *arg) {
     return false;
 }
 
-static int handle_lform(ar_parser *parser, char *arg, int arg_len, int *i) {
+static int handle_lform(ar_parser *parser, char *arg, int *arg_idx) {
+    if (arg == NULL) return -1; // critical error, should not occur 
+    size_t arg_len = strlen(arg);
     int index = get_lform_index(parser, arg);
     if (index == -1) {
         if (parser->exit_on_error == true) {
@@ -241,9 +243,9 @@ static int handle_lform(ar_parser *parser, char *arg, int arg_len, int *i) {
             check_ptr(new_val);
             memcpy(new_val, arg + eq_idx + 1, new_val_len); 
             add_value(parser, index, new_val);
-        } else if (*i + 1 < parser->argc) { // value is the next argument
-            add_value(parser, index, parser->argv[*i + 1]);
-            (*i)++; 
+        } else if (*arg_idx + 1 < parser->argc) { // value is the next argument
+            add_value(parser, index, parser->argv[*arg_idx + 1]);
+            (*arg_idx)++; 
             return SUCCESS; 
         } else {
             if (parser->exit_on_error == true) {
@@ -268,7 +270,9 @@ static int handle_lform(ar_parser *parser, char *arg, int arg_len, int *i) {
     return SUCCESS;
 }
 
-static int handle_sform(ar_parser *parser, char *arg, int arg_len, int *i) {
+static int handle_sform(ar_parser *parser, char *arg, int *arg_idx) {
+    if (arg == NULL) return -1; // critical error, should not occur in the first place
+    size_t arg_len = strlen(arg);
     for (int j = 1; j < arg_len; j++) { // iterate over all characters 
         int index = get_sform_index(parser, arg[j]);
         if (index == -1) {
@@ -279,10 +283,10 @@ static int handle_sform(ar_parser *parser, char *arg, int arg_len, int *i) {
                 return INV_OPT;
             }
         }
-        if ((parser->cfgv[index].flags & VAL_MASK) != AR_NO_VAL) { //needs at least one value. The value will either be
+        if ((parser->cfgv[index].flags & VAL_MASK) != AR_NO_VAL) { //needs at least one value.
 
             if (j == arg_len - 1) {  // value MUST be the next argument
-                if (*i == parser->argc - 1) { // no val supplied
+                if (*arg_idx == parser->argc - 1) { // no val supplied
                     if (parser->exit_on_error == true) {
                         fprintf(stderr, "Option %s was not supplied a value\n", arg);
                         exit(NO_VAL);
@@ -290,8 +294,8 @@ static int handle_sform(ar_parser *parser, char *arg, int arg_len, int *i) {
                         return NO_VAL;
                     }
                 } else { //value is next arg
-                    add_value(parser, index, parser->argv[*i + 1]);
-                    (*i)++;
+                    add_value(parser, index, parser->argv[*arg_idx + 1]);
+                    (*arg_idx)++;
                     return SUCCESS; 
                 }
             } else { //value is supplied in-place

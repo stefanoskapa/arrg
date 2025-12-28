@@ -353,6 +353,202 @@ void test_add_positional_returns_tm_pos_args_1(void) {
     TEST_ASSERT_EQUAL_INT(TM_POS_ARGS, a);
 }
 
+void test_handle_sform_returns_success_1(void) {
+    ar_conf cfgv[] = { 
+        {'b', "blank", "show whitespace", AR_NO_VAL},
+        {'\0', NULL, "FILE", AR_ONE_VAL},
+        {'d', "delete", NULL, AR_NO_VAL}
+    };
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
+    char *argv[] = {"utilname", "-b"};
+    int argc = sizeof(argv) / sizeof(char*);
+    ar_parser *parser = ar_init(argc, argv, cfgc, cfgv);
+    ar_exit_on_error(parser, false);
+    int arg_idx = 1;
+    int a = handle_sform(parser, "-b", &arg_idx);
+    ar_close(parser);
+    TEST_ASSERT_EQUAL_INT(SUCCESS, a);
+    TEST_ASSERT_EQUAL_INT(1, arg_idx);
+}
+
+void test_handle_sform_returns_success_2(void) {
+    ar_conf cfgv[] = { 
+        {'b', "blank", "show whitespace", AR_NO_VAL},
+        {'\0', NULL, "FILE", AR_ONE_VAL},
+        {'d', "delete", NULL, AR_ONE_VAL | AR_MANDATORY}
+    };
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
+    char *argv[] = {"utilname", "-d", "file.txt"};
+    int argc = sizeof(argv) / sizeof(char*);
+    ar_parser *parser = ar_init(argc, argv, cfgc, cfgv);
+    ar_exit_on_error(parser, false);
+    int arg_idx = 1;
+    int a = handle_sform(parser, "-d", &arg_idx);
+    ar_close(parser);
+    TEST_ASSERT_EQUAL_INT(SUCCESS, a);
+    TEST_ASSERT_EQUAL_INT(2, arg_idx); //has been incremented because value is the next argument
+}
+
+void test_handle_sform_returns_success_3(void) {
+    ar_conf cfgv[] = { 
+        {'b', "blank", "show whitespace", AR_NO_VAL},
+        {'\0', NULL, "FILE", AR_ONE_VAL},
+        {'d', "delete", NULL, AR_ONE_VAL | AR_MANDATORY}
+    };
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
+    char *argv[] = {"utilname", "-bd", "file.txt"};
+    int argc = sizeof(argv) / sizeof(char*);
+    ar_parser *parser = ar_init(argc, argv, cfgc, cfgv);
+    ar_exit_on_error(parser, false);
+    int arg_idx = 1;
+    int a = handle_sform(parser, "-bd", &arg_idx);
+    ar_close(parser);
+    TEST_ASSERT_EQUAL_INT(SUCCESS, a);
+    TEST_ASSERT_EQUAL_INT(2, arg_idx); //has been incremented because value is the next argument
+}
+
+void test_handle_sform_returns_success_4(void) {
+    ar_conf cfgv[] = { 
+        {'b', "blank", "show whitespace", AR_NO_VAL},
+        {'\0', NULL, "FILE", AR_ONE_VAL},
+        {'d', "delete", NULL, AR_ONE_VAL | AR_MANDATORY}
+    };
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
+    char *argv[] = {"utilname", "-dfile.txt"};
+    int argc = sizeof(argv) / sizeof(char*);
+    ar_parser *parser = ar_init(argc, argv, cfgc, cfgv);
+    ar_exit_on_error(parser, false);
+    int arg_idx = 1;
+    int a = handle_sform(parser, "-dfile.txt", &arg_idx);
+    ar_close(parser);
+    TEST_ASSERT_EQUAL_INT(SUCCESS, a);
+    TEST_ASSERT_EQUAL_INT(1, arg_idx); //has been incremented because value is the next argument
+}
+
+void test_handle_sform_returns_success_5(void) {
+    ar_conf cfgv[] = { 
+        {'b', "blank", "show whitespace", AR_NO_VAL},
+        {'\0', NULL, "FILE", AR_ONE_VAL},
+        {'d', "delete", NULL, AR_ONE_VAL | AR_MANDATORY}
+    };
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
+    char *argv[] = {"utilname", "-bdfile.txt"};
+    int argc = sizeof(argv) / sizeof(char*);
+    ar_parser *parser = ar_init(argc, argv, cfgc, cfgv);
+    ar_exit_on_error(parser, false);
+    int arg_idx = 1;
+    int a = handle_sform(parser, "-bdfile.txt", &arg_idx);
+    ar_close(parser);
+    TEST_ASSERT_EQUAL_INT(SUCCESS, a);
+    TEST_ASSERT_EQUAL_INT(1, arg_idx); //has been incremented because value is the next argument
+}
+
+void test_handle_sform_returns_inv_opt_1(void) {
+    ar_conf cfgv[] = { 
+        {'b', "blank", "show whitespace", AR_NO_VAL},
+        {'\0', NULL, "FILE", AR_ONE_VAL},
+        {'d', "delete", NULL, AR_ONE_VAL | AR_MANDATORY}
+    };
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
+    char *argv[] = {"utilname", "-f", "file.txt"};
+    int argc = sizeof(argv) / sizeof(char*);
+    ar_parser *parser = ar_init(argc, argv, cfgc, cfgv);
+    ar_exit_on_error(parser, false);
+    int arg_idx = 1;
+    int a = handle_sform(parser, "-f", &arg_idx);
+    ar_close(parser);
+    TEST_ASSERT_EQUAL_INT(INV_OPT, a);
+}
+
+void test_handle_sform_returns_no_val_1(void) {
+    ar_conf cfgv[] = { 
+        {'b', "blank", "show whitespace", AR_NO_VAL},
+        {'\0', NULL, "FILE", AR_ONE_VAL},
+        {'d', "delete", NULL, AR_ONE_VAL | AR_MANDATORY}
+    };
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
+    char *argv[] = {"utilname", "-d"};
+    int argc = sizeof(argv) / sizeof(char*);
+    ar_parser *parser = ar_init(argc, argv, cfgc, cfgv);
+    ar_exit_on_error(parser, false);
+    int arg_idx = 1;
+    int a = handle_sform(parser, "-d", &arg_idx);
+    ar_close(parser);
+    TEST_ASSERT_EQUAL_INT(NO_VAL, a);
+}
+
+void test_handle_lform_returns_success_1(void) {
+    ar_conf cfgv[] = { 
+        {'b', "blank", "show whitespace", AR_NO_VAL},
+        {'\0', NULL, "FILE", AR_ONE_VAL},
+        {'d', "delete", NULL, AR_NO_VAL}
+    };
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
+    char *argv[] = {"utilname", "--blank"};
+    int argc = sizeof(argv) / sizeof(char*);
+    ar_parser *parser = ar_init(argc, argv, cfgc, cfgv);
+    ar_exit_on_error(parser, false);
+    int arg_idx = 1;
+    int a = handle_lform(parser, "--blank", &arg_idx);
+    ar_close(parser);
+    TEST_ASSERT_EQUAL_INT(SUCCESS, a);
+    TEST_ASSERT_EQUAL_INT(1, arg_idx);
+}
+
+void test_handle_lform_returns_success_2(void) {
+    ar_conf cfgv[] = { 
+        {'b', "blank", "show whitespace", AR_NO_VAL},
+        {'\0', NULL, "FILE", AR_ONE_VAL},
+        {'d', "delete", NULL, AR_ONE_VAL}
+    };
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
+    char *argv[] = {"utilname", "--delete", "file.txt"};
+    int argc = sizeof(argv) / sizeof(char*);
+    ar_parser *parser = ar_init(argc, argv, cfgc, cfgv);
+    ar_exit_on_error(parser, false);
+    int arg_idx = 1;
+    int a = handle_lform(parser, "--delete", &arg_idx);
+    ar_close(parser);
+    TEST_ASSERT_EQUAL_INT(SUCCESS, a);
+    TEST_ASSERT_EQUAL_INT(2, arg_idx);
+}
+
+void test_handle_lform_returns_success_3(void) {
+    ar_conf cfgv[] = { 
+        {'b', "blank", "show whitespace", AR_NO_VAL},
+        {'\0', NULL, "FILE", AR_ONE_VAL},
+        {'d', "delete", NULL, AR_ONE_VAL}
+    };
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
+    char *argv[] = {"utilname", "--delete=file.txt"};
+    int argc = sizeof(argv) / sizeof(char*);
+    ar_parser *parser = ar_init(argc, argv, cfgc, cfgv);
+    ar_exit_on_error(parser, false);
+    int arg_idx = 1;
+    int a = handle_lform(parser, "--delete=file.txt", &arg_idx);
+    ar_close(parser);
+    TEST_ASSERT_EQUAL_INT(SUCCESS, a);
+    TEST_ASSERT_EQUAL_INT(1, arg_idx);
+}
+
+void test_handle_lform_returns_inv_opt_1(void) {
+    ar_conf cfgv[] = { 
+        {'b', "blank", "show whitespace", AR_NO_VAL},
+        {'\0', NULL, "FILE", AR_ONE_VAL},
+        {'d', "delete", NULL, AR_NO_VAL}
+    };
+    int cfgc = sizeof(cfgv) / sizeof(ar_conf);
+    char *argv[] = {"utilname", "--blanks"};
+    int argc = sizeof(argv) / sizeof(char*);
+    ar_parser *parser = ar_init(argc, argv, cfgc, cfgv);
+    ar_exit_on_error(parser, false);
+    int arg_idx = 1;
+    int a = handle_lform(parser, "--blanks", &arg_idx);
+    ar_close(parser);
+    TEST_ASSERT_EQUAL_INT(INV_OPT, a);
+    TEST_ASSERT_EQUAL_INT(1, arg_idx);
+}
+
 void setUp(void) {}
 void tearDown(void) {}
 
@@ -398,5 +594,16 @@ int main(void) {
     RUN_TEST(test_add_positional_returns_success_1);
     RUN_TEST(test_add_positional_returns_no_pos_args_1);
     RUN_TEST(test_add_positional_returns_tm_pos_args_1);
+    RUN_TEST(test_handle_sform_returns_success_1);
+    RUN_TEST(test_handle_sform_returns_success_2);
+    RUN_TEST(test_handle_sform_returns_success_3);
+    RUN_TEST(test_handle_sform_returns_success_4);
+    RUN_TEST(test_handle_sform_returns_success_5);
+    RUN_TEST(test_handle_sform_returns_inv_opt_1);
+    RUN_TEST(test_handle_sform_returns_no_val_1);
+    RUN_TEST(test_handle_lform_returns_success_1);
+    RUN_TEST(test_handle_lform_returns_success_2);
+    RUN_TEST(test_handle_lform_returns_success_3);
+    RUN_TEST(test_handle_lform_returns_inv_opt_1);
     return UNITY_END();
 }
