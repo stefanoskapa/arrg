@@ -1,190 +1,245 @@
-# arrg
+# Arrg
 
-A minimal, no-nonsense argument parsing library for C.
+A lightweight, portable, zero-dependency command line argument parser for C.
 
-**arrg** handles the tedious parts of CLI argument parsing so you don't have to. Define your options, call `ar_handle()`, and get on with your program. Invalid input? arrg catches it and exits with a clear error message. Need `--help`? It's built-in.
+Arrg is written in standard C99 and works on any platform with a conforming compiler.
 
 ## Features
 
-- Short (`-v`) and long (`--verbose`) option forms
-- Flags, single-value, and multi-value options
-- Built-in `--help` and `--version` generation
-- Positional argument support
+- Short (`-v`) and long (`--verbose`) option formats
+- Combined short options (`-abc`)
+- Inline values (`-ofile`, `--output=file`)
+- Positional arguments
+- Multi-value options
 - Mandatory option enforcement
-- Automatic error handling for invalid input
-- Support for `--` to end option parsing
+- Auto-generated help text
+- Built-in `--help` and `--version` support
+
+## Installation
+
+Copy `Arrg.c` and `Arrg.h` into your project, or build as a static library:
+```bash
+gcc -c Arrg.c -o Arrg.o
+ar rcs libarrg.a Arrg.o
+```
 
 ## Quick Start
-
 ```c
-#include "arrg.h"
+#include "Arrg.h"
 
-enum { OPT_VERBOSE, OPT_OUTPUT, OPT_HELP };
+enum { OPT_VERBOSE, OPT_OUTPUT, OPT_INPUT, OPT_HELP };
 
-int main(int argc, char *argv[]) {
-    Ar_conf opts[] = {
-        {'v', "verbose", "enable verbose output",     AR_NO_VAL},
-        {'o', "output",  "output file",               AR_ONE_VAL | AR_MANDATORY},
-        ARRG_HELP
-    };
-    int optc = sizeof(opts) / sizeof(opts[0]);
+ar_conf config[] = {
+    {'v', "verbose", "Enable verbose output",  AR_NO_VAL},
+    {'o', "output",  "Output file",            AR_ONE_VAL | AR_MANDATORY},
+    {'\0', NULL,     "input files",            AR_MULTI_VAL},
+    ARRG_HELP
+};
 
-    ar_program_name("myapp");
-    ar_handle(argc, argv, optc, opts);
+int main(int argc, char **argv) {
+    ar_parser *p = ar_init(argc, argv, 4, config);
+    ar_program_name(p, "mytool");
+    ar_program_description(p, "A simple file processor");
+    ar_parse(p);
 
-    if (ar_is_provided(OPT_VERBOSE)) {
-        printf("Verbose mode enabled\n");
+    if (ar_is_provided(p, OPT_VERBOSE)) {
+        printf("Verbose mode\n");
     }
 
-    char **output = ar_get_values(OPT_OUTPUT);
-    printf("Output file: %s\n", output[0]);
+    char *output = ar_get_values(p, OPT_OUTPUT)[0];
+    printf("Output: %s\n", output);
 
-    ar_close(optc);
+    int file_count = ar_get_val_len(p, OPT_INPUT);
+    char **files = ar_get_values(p, OPT_INPUT);
+    for (int i = 0; i < file_count; i++) {
+        printf("Input: %s\n", files[i]);
+    }
+
+    ar_close(p);
     return 0;
 }
 ```
 
+Running `mytool --help` produces:
 ```
-$ ./myapp --output result.txt -v
-Verbose mode enabled
-Output file: result.txt
+Usage: mytool [OPTION]... [input files]...
+A simple file processor
 
-$ ./myapp
-You have to supply at least one value for --output
-
-$ ./myapp --help
-Usage: myapp [OPTION]...
-  -v, --verbose    enable verbose output
-  -o, --output     output file
+  -v, --verbose    Enable verbose output
+  -o, --output     Output file
       --help       display this help and exit
 ```
 
-## Installation
+## Configuration
 
-Copy `arrg.h` and `arrg.c` into your project. No external dependencies.
-
-## API Reference
-
-### Configuration
-
-Each option is defined using the `Ar_conf` struct:
-
+Each option is defined with an `ar_conf` struct:
 ```c
-typedef struct Ar_conf {
-    char     sform;        // short form, e.g. 'v' for -v
-    char    *lform;        // long form, e.g. "verbose" for --verbose
-    char    *description;  // shown in --help output
-    uint32_t flags;        // behavior flags (see below)
-} Ar_conf;
+typedef struct ar_conf {
+    char sform;         // Short form: 'v' for -v, or '\0' for none
+    char *lform;        // Long form: "verbose" for --verbose, or NULL for none
+    char *description;  // Help text description
+    uint32_t flags;     // Combination of AR_* flags
+} ar_conf;
 ```
 
 ### Flags
 
-Combine with bitwise OR (`|`):
+| Flag           | Description                          |
+|----------------|--------------------------------------|
+| `AR_NO_VAL`    | Boolean flag, takes no value         |
+| `AR_ONE_VAL`   | Accepts exactly one value            |
+| `AR_MULTI_VAL` | Accepts one or more values           |
+| `AR_MANDATORY` | Option must be provided              |
 
-| Flag | Description |
-|------|-------------|
-| `AR_NO_VAL` | Option is a flag (no value accepted) |
-| `AR_ONE_VAL` | Option accepts exactly one value |
-| `AR_MULTI_VAL` | Option accepts multiple values |
-| `AR_MANDATORY` | Option must be provided |
-
-### Built-in Options
-
+Combine flags with bitwise OR:
 ```c
-ARRG_HELP      // adds --help
-ARRG_VERSION   // adds --version (set version with ar_program_version())
+{'o', "output", "Output file", AR_ONE_VAL | AR_MANDATORY}
 ```
 
-### Functions
+### Option Types
 
+**Flags** (no value):
 ```c
-// Processing
-int ar_handle(int argc, char *argv[], int cfgc, Ar_conf cfgv[]);
-
-// Retrieval (use the option's index in your config array)
-bool    ar_is_provided(int opt_idx);
-char  **ar_get_values(int opt_idx);
-int     ar_get_val_len(int opt_idx);
-
-// Optional setup (call before ar_handle)
-void ar_program_name(char *name);
-void ar_program_version(char *ver);
-void ar_program_description(char *desc);
-
-// Cleanup
-void ar_close(int cfgc);
+{'v', "verbose", "Enable verbose mode", AR_NO_VAL}
+// Usage: -v, --verbose
 ```
 
-## Examples
-
-### Multi-value option
-
+**Single value**:
 ```c
-Ar_conf opts[] = {
-    {'i', "include", "directories to include", AR_MULTI_VAL},
-};
-// ...
-ar_handle(argc, argv, 1, opts);
+{'o', "output", "Output file", AR_ONE_VAL}
+// Usage: -o file, -ofile, --output file, --output=file
+```
 
-int count = ar_get_val_len(0);
-char **dirs = ar_get_values(0);
-for (int i = 0; i < count; i++) {
-    printf("Include: %s\n", dirs[i]);
+**Multiple values**:
+```c
+{'I', "include", "Include paths", AR_MULTI_VAL}
+// Usage: -I path1 -I path2, --include=path1 --include=path2
+```
+
+### Positional Arguments
+
+Positional arguments are values passed without an option flag, like `mytool file1.txt file2.txt`.
+
+To accept positional arguments, add a configuration entry with both `sform` and `lform` set to null:
+```c
+{'\0', NULL, "input files", AR_MULTI_VAL}
+```
+
+The `description` field is used in the help text to describe what the positional arguments represent.
+
+**Single positional argument:**
+```c
+{'\0', NULL, "filename", AR_ONE_VAL}
+// Usage: mytool config.json
+```
+
+**Multiple positional arguments:**
+```c
+{'\0', NULL, "input files", AR_MULTI_VAL}
+// Usage: mytool file1.txt file2.txt file3.txt
+```
+
+**Mandatory positional argument:**
+```c
+{'\0', NULL, "input file", AR_ONE_VAL | AR_MANDATORY}
+// Parser will error if no positional argument is provided
+```
+
+Retrieve positional arguments using the same functions as regular options:
+```c
+if (ar_is_provided(p, OPT_INPUT)) {
+    int count = ar_get_val_len(p, OPT_INPUT);
+    char **files = ar_get_values(p, OPT_INPUT);
+    for (int i = 0; i < count; i++) {
+        printf("File: %s\n", files[i]);
+    }
 }
 ```
 
-```
-$ ./myapp -i src -i lib --include=vendor
-Include: src
-Include: lib
-Include: vendor
-```
+**Note:** Only one positional argument configuration is supported per parser.
 
-### Positional arguments
+### Built-in Options
 
-Define an option with both `sform` and `lform` set to null:
+Add these constants to your config array for automatic handling:
 
+| Constant       | Description                                      |
+|----------------|--------------------------------------------------|
+| `ARRG_HELP`    | Adds `--help`, prints auto-generated help text   |
+| `ARRG_VERSION` | Adds `--version`, requires `ar_program_version`  |
+
+Example:
 ```c
-enum { OPT_FILES };
-
-Ar_conf opts[] = {
-    {'\0', NULL, "input files", AR_MULTI_VAL | AR_MANDATORY},
+ar_conf config[] = {
+    {'v', "verbose", "Enable verbose output", AR_NO_VAL},
+    ARRG_HELP,
+    ARRG_VERSION
 };
+
+ar_parser *p = ar_init(argc, argv, 3, config);
+ar_program_name(p, "mytool");
+ar_program_version(p, "1.0.0");
+ar_parse(p);
 ```
 
-```
-$ ./myapp file1.txt file2.txt
+## API Reference
+
+### Lifecycle
+```c
+// Initialize parser
+ar_parser *ar_init(int argc, char **argv, int cfgc, ar_conf *cfgv);
+
+// Parse arguments (call after ar_init and configuration)
+int ar_parse(ar_parser *parser);
+
+// Free resources (call when done)
+void ar_close(ar_parser *parser);
 ```
 
-### Value syntax
+### Parser Configuration
+```c
+// Set program name for help text
+void ar_program_name(ar_parser *parser, char *name);
 
-All of these are equivalent:
+// Set program description for help text
+void ar_program_description(ar_parser *parser, char *desc);
 
+// Set version string for --version
+void ar_program_version(ar_parser *parser, char *ver);
+
+// Control error behavior: true = exit on error (default), false = return error code
+void ar_exit_on_error(ar_parser *parser, bool b);
 ```
--o output.txt
--ooutput.txt
---output output.txt
---output=output.txt
+
+### Retrieving Values
+```c
+// Check if option was provided
+bool ar_is_provided(ar_parser *parser, int opt_idx);
+
+// Get array of values for an option
+char **ar_get_values(ar_parser *parser, int opt_idx);
+
+// Get number of values for an option
+int ar_get_val_len(ar_parser *parser, int opt_idx);
 ```
 
 ## Error Handling
 
-arrg validates input and exits with a clear message on errors:
+By default, Arrg prints an error message and exits on parse errors. For custom error handling:
+```c
+ar_parser *p = ar_init(argc, argv, cfgc, config);
+ar_exit_on_error(p, false);
 
+int result = ar_parse(p);
+if (result != 0) {
+    // Handle error
+    ar_close(p);
+    return 1;
+}
 ```
-$ ./myapp --unknown
---unknown is not a valid option
 
-$ ./myapp -o
-Option -o was not supplied a value
+## Argument Parsing Behavior
 
-$ ./myapp --output=one --output=two
-Option output doesn't accept multiple values
-```
-
-Use `--` to stop option parsing and treat remaining arguments as positional:
-
-```
-$ ./myapp -- --this-is-a-filename
-```
+- `--` stops option parsing; subsequent arguments are treated as positional
+- Short options can be combined: `-abc` is equivalent to `-a -b -c`
+- Short options with values can be inline: `-ofile` or separate: `-o file`
+- Long options with values can use `=`: `--output=file` or separate: `--output file`

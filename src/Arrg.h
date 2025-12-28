@@ -1,113 +1,146 @@
+/**
+ * @file Arrg.h
+ * @brief Lightweight command line argument parser for C
+ */
+
 #ifndef ARRG_H
 #define ARRG_H
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
+
 #include <stdbool.h>
+#include <stdint.h>
 
-typedef struct ar_parser ar_parser;
 /**
- * NO_VAL:     used to indicate an option without value (flag)
- * ONE_VAL:    used to indicate an option that accepts one value
- * MULTI_VAL:  used to indicate an option that accepts multiple values
- * MANDATORY:  used to indicate an option that is mandatory
+ * @brief Opaque parser structure
  */
-#define AR_NO_VAL      0b00000000000000000000000000000110
-#define AR_ONE_VAL     0b00000000000000000000000000000010
-#define AR_MULTI_VAL   0b00000000000000000000000000000100
-#define AR_MANDATORY   0b00000000000000000000000000000001
+typedef struct ar_parser ar_parser;
 
+/**
+ * @name Option Flags
+ * @brief Flags to configure option behavior. Combine with bitwise OR.
+ * @{
+ */
+#define AR_NO_VAL      0b00000000000000000000000000000110  /**< Option takes no value (flag) */
+#define AR_ONE_VAL     0b00000000000000000000000000000010  /**< Option takes exactly one value */
+#define AR_MULTI_VAL   0b00000000000000000000000000000100  /**< Option takes multiple values */
+#define AR_MANDATORY   0b00000000000000000000000000000001  /**< Option is required */
+/** @} */
+
+/**
+ * @brief Configuration for a single option
+ */
 typedef struct ar_conf {
-    char sform; //short form options, e.g. 'e'
-    char *lform; //long form options e.g. 'supress', 'dry-run'
-    char *description; // command description for help screen
-    uint32_t flags; // use bitwise OR with the AR_* macros
+    char sform;         /**< Short form (e.g., 'v' for -v), or '\\0' if none */
+    char *lform;        /**< Long form (e.g., "verbose" for --verbose), or NULL if none */
+    char *description;  /**< Description shown in help text */
+    uint32_t flags;     /**< Bitwise OR of AR_* flags */
 } ar_conf;
 
-
-/*
- * Optional built-in --help functionality.
- * To use, pass it into the cfgv array.
+/**
+ * @brief Built-in --help option
+ *
+ * Add to your configuration array to enable automatic help generation.
  */
 extern const ar_conf ARRG_HELP;
 
-/*
- * Optional built-in --version functionality.
- * To use, pass it into the cfgv array.
+/**
+ * @brief Built-in --version option
+ *
+ * Add to your configuration array to enable version display.
+ * Set version string with ar_program_version().
  */
 extern const ar_conf ARRG_VERSION;
 
-
-ar_parser *ar_init(int argc, char **argv, int cfgc, ar_conf *cfgv);
 /**
- * Processes CLI argumets and cfgv configuration
- * Needs to be called before 
+ * @brief Initialize the argument parser
  *
- * @param argc argument count from main function
- * @param argv argument array from main function
- * @param cfgc item count in config array
- * @param cfgv config array
+ * @param argc Argument count from main()
+ * @param argv Argument vector from main()
+ * @param cfgc Number of elements in cfgv
+ * @param cfgv Array of option configurations
+ * @return Pointer to parser instance, or NULL on failure
+ *
+ * @note For positional arguments, set both sform='\\0' and lform=NULL
+ */
+ar_parser *ar_init(int argc, char **argv, int cfgc, ar_conf *cfgv);
+
+/**
+ * @brief Parse command line arguments
+ *
+ * @param parser Parser instance from ar_init()
+ * @return 0 on success, non-zero error code on failure
  */
 int ar_parse(ar_parser *parser);
 
 /**
- * Free's up allocated memory. Should be called
- * when done using arrg.
+ * @brief Free parser resources
+ *
+ * @param parser Parser instance from ar_init()
  */
 void ar_close(ar_parser *parser);
 
 /**
- * Set the version number for --version
- * (optional)
- * @param parser pointer to ar_parser object returned from ar_init
- * @param ver Version string
+ * @brief Set program version string
+ *
+ * Used by --version when ARRG_VERSION is in the configuration.
+ *
+ * @param parser Parser instance
+ * @param ver Version string (e.g., "1.0.0")
  */
 void ar_program_version(ar_parser *parser, char *ver);
 
 /**
- * Provide the program name to 
- * show USAGE within --help
- * (optional)
- * @param parser pointer to ar_parser object returned from ar_init
- * @param name Name of the consuming program
+ * @brief Set program name
+ *
+ * Displayed in usage line of help text.
+ *
+ * @param parser Parser instance
+ * @param name Program name
  */
 void ar_program_name(ar_parser *parser, char *name);
 
 /**
- * Provide a program description
- * to appear on --help screen.
- * (optional)
- * @param parser pointer to ar_parser object returned from ar_init
- * @param desc A description of the consuming program
+ * @brief Set program description
+ *
+ * Displayed in help text below usage line.
+ *
+ * @param parser Parser instance
+ * @param desc Description string
  */
 void ar_program_description(ar_parser *parser, char *desc);
 
 /**
- * Returns whether the specific option
- * was provided by the user.
+ * @brief Configure error handling behavior
  *
- * @param parser pointer to ar_parser object returned from ar_init
- * @param opt_idx Option index in cfgv
+ * @param parser Parser instance
+ * @param b If true (default), exit on parse errors. If false, return error code.
+ */
+void ar_exit_on_error(ar_parser *parser, bool b);
+
+/**
+ * @brief Check if an option was provided
+ *
+ * @param parser Parser instance
+ * @param idx Index of option in cfgv array
+ * @return true if option was provided, false otherwise
  */
 bool ar_is_provided(ar_parser *parser, int idx);
 
 /**
- * Returns the provided values for the
- * option as a list of strings.
+ * @brief Get values for an option
  *
- * @param parser pointer to ar_parser object returned from ar_init
- * @param opt_idx Option index in cfgv
+ * @param parser Parser instance
+ * @param opt_idx Index of option in cfgv array
+ * @return NULL-terminated array of value strings, or NULL if none
  */
 char **ar_get_values(ar_parser *parser, int opt_idx);
 
 /**
- * Returns how many values the user
- * provided for the specific option.
+ * @brief Get number of values for an option
  *
- * @param parser pointer to ar_parser object returned from ar_init
- * @param opt_idx Option index in cfgv
+ * @param parser Parser instance
+ * @param opt_idx Index of option in cfgv array
+ * @return Number of values provided, or 0 if none
  */
 int ar_get_val_len(ar_parser *parser, int opt_idx);
 
-void ar_exit_on_error(ar_parser *parser, bool b);
 #endif
