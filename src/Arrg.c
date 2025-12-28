@@ -238,11 +238,7 @@ static int handle_lform(ar_parser *parser, char *arg, int *arg_idx) {
     if ((parser->cfgv[index].flags & VAL_MASK) != AR_NO_VAL) { // option needs at least one value
         int eq_idx = strlen(parser->cfgv[index].lform) + 2; //length of arg spec+2 and index of = (if exists)
         if (arg[eq_idx] == '=' && arg_len > eq_idx + 1) { // = found followed by more chars 
-            int new_val_len = arg_len - eq_idx; // new val len including \0
-            char *new_val = malloc(new_val_len); // total arg length - lform+2 = len of value + 1
-            check_ptr(new_val);
-            memcpy(new_val, arg + eq_idx + 1, new_val_len); 
-            add_value(parser, index, new_val);
+            add_value(parser, index, arg + eq_idx + 1);
         } else if (*arg_idx + 1 < parser->argc) { // value is the next argument
             add_value(parser, index, parser->argv[*arg_idx + 1]);
             (*arg_idx)++; 
@@ -299,10 +295,7 @@ static int handle_sform(ar_parser *parser, char *arg, int *arg_idx) {
                     return SUCCESS; 
                 }
             } else { //value is supplied in-place
-                char *new_val=malloc(arg_len - j);
-                check_ptr(new_val);
-                memcpy(new_val, arg + j + 1, arg_len - j);
-                add_value(parser, index, new_val);
+                add_value(parser, index, arg + j + 1);
                 break;
             }
         } else { //doesn't accept values
